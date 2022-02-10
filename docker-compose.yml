@@ -1,0 +1,21 @@
+version: '2.2'
+services:
+  db:
+    container_name: formules
+    hostname: formules
+    image: postgres:11.1
+    environment:
+      POSTGRES_USER: filit
+      POSTGRES_PASSWORD: filit
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+  app:
+    image: calcutator
+    build:
+      context: .
+    container_name: calcutator
+    depends_on:
+      - db
+    environment:
+      PGSQL_URL: jdbc:postgresql://db:5432/postgres
