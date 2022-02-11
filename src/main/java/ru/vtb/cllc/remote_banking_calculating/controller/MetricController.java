@@ -15,7 +15,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -28,8 +31,10 @@ public class MetricController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("")
-    public ResponseEntity<Map<LocalDate, AHT>> getAHT(@RequestParam long id_user) {
+    public ResponseEntity<Map<LocalDate, AHT>> getAHT(@RequestParam Long id_user) {
+        ForkJoinPool forkJoinPool = new ForkJoinPool(32);
 
+        long readingStart = System.currentTimeMillis();
         Stream<Record> recordStream = Stream.empty();
         try {
             recordStream = Files.list(Path.of("C:\\Work\\Liga\\VTB\\cllc\\showcase"))
@@ -38,16 +43,33 @@ public class MetricController {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        Stream<Record> finalRecordStream = recordStream;
+        List<Record> records = null;
+        try {
+            records = forkJoinPool.submit(() -> finalRecordStream.parallel().collect(Collectors.toList())).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        System.out.printf( "%,d sec for reading", (System.currentTimeMillis() - readingStart)/1000);
+        System.out.println();
 
         long start = System.currentTimeMillis();
         Map<LocalDate, AHT> byDate = new HashMap<>();
-        recordStream
+        records.stream()
                 .filter(record -> Objects.isNull(id_user) || record.id_user==id_user)
-                .collect(Collectors.groupingBy(Record::getDate)).forEach((date, records) -> {
-                    ForkJoinPool forkJoinPool = new ForkJoinPool(8);
-                    forkJoinPool.submit(()-> {
-                            byDate.put(date, records.stream().parallel().collect(Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity(), Collector.Characteristics.CONCURRENT)));
-                    });
+                .collect(Collectors.groupingBy(Record::getDate)).forEach((date, recs) -> {
+                    ForkJoinTask<AHT> ahtTask = forkJoinPool.submit(() ->
+                            recs.stream().parallel().collect(Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity())));
+                    try {
+                        byDate.put(date, ahtTask.get());
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
                 });
         System.out.printf( "%,d sec", (System.currentTimeMillis() - start)/1000);
         System.out.println();
@@ -56,6 +78,7 @@ public class MetricController {
     }
 
     private Stream<Record> records(Path path) {
+        System.out.println(Thread.currentThread().getName());
         String jsonArray = null;
         try {
             jsonArray = new BufferedReader(new FileReader(path.toFile())).readLine();
@@ -76,7 +99,7 @@ public class MetricController {
 
     public static void main(String[] args) {
         MetricController controller = new MetricController();
-        System.out.println(controller.getAHT(521));
+        System.out.println(controller.getAHT(null));
 
     }
 }

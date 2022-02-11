@@ -25,7 +25,7 @@ public class AHT {
 
     public void add(Record record){
         recordsCount++;
-        currentThreadNames.add(Thread.currentThread().getName());
+        currentThreadNames.add(Thread.currentThread().getName().replace("ForkJoinPool-1-worker-", ""));
         t_ring+=record.t_ring;
         t_inb+=record.t_inb;
         t_hold+=record.t_hold;
