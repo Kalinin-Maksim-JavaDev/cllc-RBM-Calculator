@@ -28,7 +28,7 @@ public class MetricController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("")
-    public ResponseEntity<Map<LocalDate, Long>> getAHT(@RequestParam String id) {
+    public ResponseEntity<Map<LocalDate, AHT>> getAHT(@RequestParam String id) {
 
         Stream<Record> recordStream = Stream.empty();
         try {
@@ -40,9 +40,14 @@ public class MetricController {
         }
 
         long start = System.currentTimeMillis();
-        Map<LocalDate, Long> byDate = recordStream
-                .collect(Collectors.groupingBy(Record::getDate,
-                        Collector.of(AHT::new, AHT::add, AHT::sum, AHT::aht)));
+        Map<LocalDate, AHT> byDate = new HashMap<>();
+        recordStream
+                .collect(Collectors.groupingBy(Record::getDate)).forEach((date, records) -> {
+                    ForkJoinPool forkJoinPool = new ForkJoinPool(8);
+                    forkJoinPool.submit(()-> {
+                            byDate.put(date, records.stream().parallel().collect(Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity(), Collector.Characteristics.CONCURRENT)));
+                    });
+                });
         System.out.printf( "%,d sec", (System.currentTimeMillis() - start)/1000);
         System.out.println();
 
@@ -50,7 +55,6 @@ public class MetricController {
     }
 
     private Stream<Record> records(Path path) {
-        System.out.println(Thread.currentThread().getName());
         String jsonArray = null;
         try {
             jsonArray = new BufferedReader(new FileReader(path.toFile())).readLine();
