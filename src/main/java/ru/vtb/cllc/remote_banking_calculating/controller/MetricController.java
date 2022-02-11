@@ -32,20 +32,15 @@ public class MetricController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("")
     public ResponseEntity<Map<LocalDate, AHT>> getAHT(@RequestParam Long id_user) {
-        ForkJoinPool forkJoinPool = new ForkJoinPool(32);
 
         long readingStart = System.currentTimeMillis();
         List<Record> records = List.of();
         try {
             List<File> files = Files.list(Path.of("C:\\Work\\Liga\\VTB\\cllc\\showcase"))
                     .map(Path::toFile).collect(Collectors.toList());
-            records = forkJoinPool.submit(() -> files.stream()
+            records =  files.stream()
                     .parallel()
-                    .flatMap(this::records).collect(Collectors.toList())).get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+                    .flatMap(this::records).collect(Collectors.toList());
         } catch (IOException e) {
             e.printStackTrace();
         }
