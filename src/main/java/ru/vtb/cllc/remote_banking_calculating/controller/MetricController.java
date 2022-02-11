@@ -37,12 +37,16 @@ public class MetricController {
         long readingStart = System.currentTimeMillis();
         List<Record> records = List.of();
         try {
-            records = forkJoinPool.submit(() -> Files.list(Path.of("C:\\Work\\Liga\\VTB\\cllc\\showcase"))
+            List<File> files = Files.list(Path.of("C:\\Work\\Liga\\VTB\\cllc\\showcase"))
+                    .map(Path::toFile).collect(Collectors.toList());
+            records = forkJoinPool.submit(() -> files.stream()
                     .parallel()
                     .flatMap(this::records).collect(Collectors.toList())).get();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -65,11 +69,11 @@ public class MetricController {
         return new ResponseEntity<>(byDate,  HttpStatus.OK);
     }
 
-    private Stream<Record> records(Path path) {
+    private Stream<Record> records(File file) {
         System.out.println(Thread.currentThread().getName());
         String jsonArray = null;
         try {
-            jsonArray = new BufferedReader(new FileReader(path.toFile())).readLine();
+            jsonArray = new BufferedReader(new FileReader(file)).readLine();
         } catch (IOException e) {
             e.printStackTrace();
         }
