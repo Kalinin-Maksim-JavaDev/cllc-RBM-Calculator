@@ -28,7 +28,7 @@ public class MetricController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("")
-    public ResponseEntity<Map<LocalDate, AHT>> getAHT(@RequestParam String id) {
+    public ResponseEntity<Map<LocalDate, AHT>> getAHT(@RequestParam long id_user) {
 
         Stream<Record> recordStream = Stream.empty();
         try {
@@ -42,6 +42,7 @@ public class MetricController {
         long start = System.currentTimeMillis();
         Map<LocalDate, AHT> byDate = new HashMap<>();
         recordStream
+                .filter(record -> Objects.isNull(id_user) || record.id_user==id_user)
                 .collect(Collectors.groupingBy(Record::getDate)).forEach((date, records) -> {
                     ForkJoinPool forkJoinPool = new ForkJoinPool(8);
                     forkJoinPool.submit(()-> {
@@ -75,7 +76,7 @@ public class MetricController {
 
     public static void main(String[] args) {
         MetricController controller = new MetricController();
-        System.out.println(controller.getAHT("1"));
+        System.out.println(controller.getAHT(521));
 
     }
 }

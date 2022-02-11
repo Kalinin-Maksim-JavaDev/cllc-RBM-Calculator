@@ -66,4 +66,8 @@ public class Record {
     public int getId_tree_division() {
         return id_tree_division;
     }
+
+    public int getMonth() {
+        return date.getMonthValue();
+    }
 }

@@ -46,6 +46,7 @@ public class AHT {
         return aht;
     }
     public long aht() {
+        if (n_inb==0) return 0;
         return (t_ring + t_inb + t_hold + t_acw) / n_inb;
     }
 }
