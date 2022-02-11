@@ -35,18 +35,11 @@ public class MetricController {
         ForkJoinPool forkJoinPool = new ForkJoinPool(32);
 
         long readingStart = System.currentTimeMillis();
-        Stream<Record> recordStream = Stream.empty();
+        List<Record> records = List.of();
         try {
-            recordStream = Files.list(Path.of("C:\\Work\\Liga\\VTB\\cllc\\showcase"))
-                    .flatMap(this::records);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Stream<Record> finalRecordStream = recordStream;
-        List<Record> records = null;
-        try {
-            records = forkJoinPool.submit(() -> finalRecordStream.parallel().collect(Collectors.toList())).get();
+            records = forkJoinPool.submit(() -> Files.list(Path.of("C:\\Work\\Liga\\VTB\\cllc\\showcase"))
+                    .parallel()
+                    .flatMap(this::records).collect(Collectors.toList())).get();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
@@ -61,17 +54,12 @@ public class MetricController {
         records.stream()
                 .filter(record -> Objects.isNull(id_user) || record.id_user==id_user)
                 .collect(Collectors.groupingBy(Record::getDate)).forEach((date, recs) -> {
-                    ForkJoinTask<AHT> ahtTask = forkJoinPool.submit(() ->
-                            recs.stream().parallel().collect(Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity())));
-                    try {
-                        byDate.put(date, ahtTask.get());
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (ExecutionException e) {
-                        e.printStackTrace();
-                    }
+                    AHT ahtTask = recs.stream().parallel().collect(Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity()));
+                    byDate.put(date, ahtTask);
                 });
-        System.out.printf( "%,d sec", (System.currentTimeMillis() - start)/1000);
+        System.out.printf("%,d sec for calculating", (System.currentTimeMillis() - start)/1000);
+        System.out.println();
+        System.out.printf("%,d operations", AHT.globalCounter.get());
         System.out.println();
 
         return new ResponseEntity<>(byDate,  HttpStatus.OK);
