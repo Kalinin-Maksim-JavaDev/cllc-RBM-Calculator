@@ -7,11 +7,13 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class AHT {
 
-    public static AtomicInteger globalCounter = new AtomicInteger();
+    public static AtomicLong summingTime = new AtomicLong();
+    public static AtomicLong aggregateTime = new AtomicLong();
     long recordsCount;
     Set<String> currentThreadNames = new HashSet<>();
     long t_ring,t_inb,t_hold,t_acw,n_inb;
@@ -26,7 +28,8 @@ public class AHT {
     }
 
     public void add(Record record){
-        if (recordsCount%100==0){
+        long start = System.currentTimeMillis();;
+        if (false && recordsCount%100==0){
             try {
                 Thread.sleep(0,1);
             } catch (InterruptedException e) {
@@ -42,9 +45,10 @@ public class AHT {
         t_hold+=record.t_hold;
         t_acw+=record.t_acw;
         n_inb+=record.n_inb;
-        globalCounter.incrementAndGet();
+        summingTime.addAndGet(System.currentTimeMillis() - start);
     }
     public static AHT sum(AHT...arr){
+        long start = System.currentTimeMillis();;
         AHT aht = new AHT();
         for (var a:arr){
             aht.t_ring+=a.t_ring;
@@ -54,12 +58,11 @@ public class AHT {
             aht.n_inb+=a.n_inb;
             aht.recordsCount+=a.recordsCount;
             aht.currentThreadNames.addAll(a.currentThreadNames);
-            globalCounter.incrementAndGet();
         }
+        aggregateTime.addAndGet(System.currentTimeMillis() - start);
         return aht;
     }
     public long aht() {
-        globalCounter.incrementAndGet();
         if (n_inb==0) return 0;
         return (t_ring + t_inb + t_hold + t_acw) / n_inb;
     }

@@ -58,7 +58,7 @@ public class MetricController {
                             .collect(Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity()));
                     byDate.put(date, ahtTask);
                 });
-        System.out.printf("%,d sec for calculating", (System.currentTimeMillis() - start)/1000);
+        System.out.printf("%,d millisec for calculating", (System.currentTimeMillis() - start));
         System.out.println();
 
 
@@ -89,7 +89,9 @@ public class MetricController {
         MetricController controller = new MetricController();
         System.out.println(controller.getAHT(null));
 
-        System.out.printf("%,d operations", AHT.globalCounter.get());
+        System.out.printf("summingTime: %,d ", AHT.summingTime.get());
+        System.out.println();
+        System.out.printf("aggregateTime: %,d ", AHT.aggregateTime.get());
         System.out.println();
     }
 }
