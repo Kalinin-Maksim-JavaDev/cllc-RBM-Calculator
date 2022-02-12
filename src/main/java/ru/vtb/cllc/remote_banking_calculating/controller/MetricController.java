@@ -26,7 +26,7 @@ public class MetricController <T>  {
 
     final private List<Record> records;
     final private Function<Record, T> demension;
-    final boolean parraleled = false;
+    final boolean parraleled = true;
 
     public MetricController(List<Record> records, Function<Record, T> demension) {
         this.records = records;
@@ -44,18 +44,12 @@ public class MetricController <T>  {
         System.out.println();
 
         long start = System.currentTimeMillis();
-        Map<T, AHT> group = new HashMap<>();
-        records.stream()
-                .filter(record -> Objects.isNull(id_user) || record.id_user==id_user)
-                .collect(Collectors.groupingBy(demension)).forEach((date, recs) -> {
-                    Stream<Record> ahtTask = recs.stream();
+        Stream<Record> recordStream = records.stream();
+        if (parraleled) recordStream = recordStream.parallel();
 
-                    if (parraleled) ahtTask = ahtTask.parallel();
+        Map<T, AHT> group = recordStream.filter(record -> Objects.isNull(id_user) || record.id_user == id_user)
+                .collect(Collectors.groupingByConcurrent(demension, Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity())));
 
-                    AHT aht = ahtTask.collect(Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity()));
-
-                    group.put((T) date, aht);
-                });
         System.out.printf("%,d millisec for calculating", (System.currentTimeMillis() - start));
         System.out.println();
 
