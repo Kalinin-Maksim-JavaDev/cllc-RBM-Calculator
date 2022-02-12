@@ -29,13 +29,6 @@ public class AHT {
 
     public void add(Record record){
         long start = System.currentTimeMillis();;
-        if (false && recordsCount%100==0){
-            try {
-                Thread.sleep(0,1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
         recordsCount++;
         currentThreadNames.add(Thread.currentThread().getName()
                 .replace("ForkJoinPool.commonPool-worker-", "")
