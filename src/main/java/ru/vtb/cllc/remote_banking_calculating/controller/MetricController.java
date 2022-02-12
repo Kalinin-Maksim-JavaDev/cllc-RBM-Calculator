@@ -15,10 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -29,23 +25,17 @@ import java.util.stream.Stream;
 @RequestMapping("/login")
 public class MetricController {
 
+    final private List<Record> records;
+
+    public MetricController(List<Record> records) {
+        this.records = records;
+    }
+
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("")
     public ResponseEntity<Map<LocalDate, AHT>> getAHT(@RequestParam Long id_user) {
 
-        long readingStart = System.currentTimeMillis();
-        List<Record> records = List.of();
-        try {
-            List<File> files = Files.list(Path.of("C:\\Work\\Liga\\VTB\\cllc\\showcase"))
-                    .map(Path::toFile).collect(Collectors.toList());
-            records =  files.stream()
-                    .parallel()
-                    .flatMap(this::records).collect(Collectors.toList());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        System.out.printf( "%,d sec for reading", (System.currentTimeMillis() - readingStart)/1000);
+        System.out.printf("id: %d ", id_user);
         System.out.println();
 
         long start = System.currentTimeMillis();
@@ -54,7 +44,7 @@ public class MetricController {
                 .filter(record -> Objects.isNull(id_user) || record.id_user==id_user)
                 .collect(Collectors.groupingBy(Record::getDate)).forEach((date, recs) -> {
                     AHT ahtTask = recs.stream()
-                            //.parallel()
+                            .parallel()
                             .collect(Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity()));
                     byDate.put(date, ahtTask);
                 });
@@ -65,7 +55,7 @@ public class MetricController {
         return new ResponseEntity<>(byDate,  HttpStatus.OK);
     }
 
-    private Stream<Record> records(File file) {
+    private static Stream<Record> records(File file) {
         System.out.println(Thread.currentThread().getName());
         String jsonArray = null;
         try {
@@ -86,8 +76,62 @@ public class MetricController {
     }
 
     public static void main(String[] args) {
-        MetricController controller = new MetricController();
-        System.out.println(controller.getAHT(null));
+
+        long readingStart = System.currentTimeMillis();
+        List<Record> records = List.of();
+        try {
+            List<File> files = Files.list(Path.of("C:\\Work\\Liga\\VTB\\cllc\\showcase"))
+                    .map(Path::toFile).collect(Collectors.toList());
+            records =  files.stream()
+                    .parallel()
+                    .flatMap(MetricController::records).collect(Collectors.toList());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.printf( "%,d sec for reading", (System.currentTimeMillis() - readingStart)/1000);
+        System.out.println();
+
+        long minCountId = records.stream()
+                .collect(Collectors.groupingBy(Record::getId_user, Collectors.counting()))
+                .entrySet()
+                .stream()
+                .sorted((e1,e2)-> (int) (e1.getValue()-e2.getValue()))
+                .findFirst()
+                .map(Map.Entry::getKey)
+                .get();
+        System.out.printf( "%d min count id", minCountId);
+        System.out.println();
+        long maxCountId = records.stream()
+                .collect(Collectors.groupingBy(Record::getId_user, Collectors.counting()))
+                .entrySet()
+                .stream()
+                .sorted((e1, e2) -> (int) -(e1.getValue() - e2.getValue()))
+                .findFirst()
+                .map(Map.Entry::getKey)
+                .get();
+        System.out.printf( "%d max count id", maxCountId);
+        System.out.println();
+
+        List<Map.Entry<Integer, Long>> rank = records.stream()
+                .collect(Collectors.groupingBy(Record::getId_user, Collectors.counting()))
+                .entrySet()
+                .stream()
+                .sorted((e1, e2) -> (int) -(e1.getValue() - e2.getValue()))
+                .collect(Collectors.toList());
+
+        MetricController controller = new MetricController(records);
+
+        {
+            ResponseEntity<Map<LocalDate, AHT>> aht = controller.getAHT(minCountId);
+            System.out.printf("aht: %s ", aht);
+            System.out.println();
+        }
+        {
+            ResponseEntity<Map<LocalDate, AHT>> aht = controller.getAHT(maxCountId);
+            System.out.printf("aht: %s ", aht);
+            System.out.println();
+        }
 
         System.out.printf("summingTime: %,d ", AHT.summingTime.get());
         System.out.println();
