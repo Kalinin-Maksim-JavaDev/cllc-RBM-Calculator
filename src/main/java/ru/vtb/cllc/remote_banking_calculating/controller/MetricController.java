@@ -113,13 +113,6 @@ public class MetricController {
         System.out.printf( "%d max count id", maxCountId);
         System.out.println();
 
-        List<Map.Entry<Integer, Long>> rank = records.stream()
-                .collect(Collectors.groupingBy(Record::getId_user, Collectors.counting()))
-                .entrySet()
-                .stream()
-                .sorted((e1, e2) -> (int) -(e1.getValue() - e2.getValue()))
-                .collect(Collectors.toList());
-
         MetricController controller = new MetricController(records);
 
         {
