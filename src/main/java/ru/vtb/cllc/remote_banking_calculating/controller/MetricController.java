@@ -14,6 +14,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -46,9 +48,21 @@ public class MetricController <T>  {
         long start = System.currentTimeMillis();
         Stream<Record> recordStream = records.stream();
         if (parraleled) recordStream = recordStream.parallel();
+        ForkJoinPool forkJoinPool = new ForkJoinPool(20);
 
-        Map<T, AHT> group = recordStream.filter(record -> Objects.isNull(id_user) || record.id_user == id_user)
-                .collect(Collectors.groupingByConcurrent(demension, Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity())));
+        Stream<Record> finalRecordStream = recordStream;
+        Map<T, AHT> group = null;
+        try {
+            group = forkJoinPool.submit(() ->
+                        finalRecordStream.filter(record -> Objects.isNull(id_user) || record.id_user == id_user)
+                    .collect(Collectors.groupingByConcurrent(demension, Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity()))))
+                    .get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
 
         System.out.printf("%,d millisec for calculating", (System.currentTimeMillis() - start));
         System.out.println();
