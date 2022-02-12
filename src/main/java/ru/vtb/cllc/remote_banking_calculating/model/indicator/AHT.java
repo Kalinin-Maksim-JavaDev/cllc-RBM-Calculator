@@ -26,6 +26,13 @@ public class AHT {
     }
 
     public void add(Record record){
+        if (recordsCount%100==0){
+            try {
+                Thread.sleep(0,1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         recordsCount++;
         currentThreadNames.add(Thread.currentThread().getName()
                 .replace("ForkJoinPool.commonPool-worker-", "")
@@ -35,11 +42,11 @@ public class AHT {
         t_hold+=record.t_hold;
         t_acw+=record.t_acw;
         n_inb+=record.n_inb;
+        globalCounter.incrementAndGet();
     }
     public static AHT sum(AHT...arr){
         AHT aht = new AHT();
         for (var a:arr){
-            globalCounter.incrementAndGet();
             aht.t_ring+=a.t_ring;
             aht.t_inb+=a.t_inb;
             aht.t_hold+=a.t_hold;
@@ -47,6 +54,7 @@ public class AHT {
             aht.n_inb+=a.n_inb;
             aht.recordsCount+=a.recordsCount;
             aht.currentThreadNames.addAll(a.currentThreadNames);
+            globalCounter.incrementAndGet();
         }
         return aht;
     }

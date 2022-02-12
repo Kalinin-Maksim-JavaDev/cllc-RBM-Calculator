@@ -53,13 +53,14 @@ public class MetricController {
         records.stream()
                 .filter(record -> Objects.isNull(id_user) || record.id_user==id_user)
                 .collect(Collectors.groupingBy(Record::getDate)).forEach((date, recs) -> {
-                    AHT ahtTask = recs.stream().parallel().collect(Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity()));
+                    AHT ahtTask = recs.stream()
+                            //.parallel()
+                            .collect(Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity()));
                     byDate.put(date, ahtTask);
                 });
         System.out.printf("%,d sec for calculating", (System.currentTimeMillis() - start)/1000);
         System.out.println();
-        System.out.printf("%,d operations", AHT.globalCounter.get());
-        System.out.println();
+
 
         return new ResponseEntity<>(byDate,  HttpStatus.OK);
     }
@@ -88,5 +89,7 @@ public class MetricController {
         MetricController controller = new MetricController();
         System.out.println(controller.getAHT(null));
 
+        System.out.printf("%,d operations", AHT.globalCounter.get());
+        System.out.println();
     }
 }

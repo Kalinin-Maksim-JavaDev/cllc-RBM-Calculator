@@ -41,12 +41,14 @@ public class Record {
     @JsonProperty("T_wait")
     public int t_wait;
 
+    public LocalDate date;
+
+
     public void setDateAsString(String dateAsString) {
         this.dateAsString = dateAsString;
         date = LocalDate.parse(dateAsString, DateTimeFormatter.ISO_DATE);
     }
 
-    public LocalDate date;
     public LocalDate getDate() {
         return date;
     }
