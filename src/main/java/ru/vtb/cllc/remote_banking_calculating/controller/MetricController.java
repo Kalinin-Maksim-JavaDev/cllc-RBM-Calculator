@@ -56,7 +56,6 @@ public class MetricController {
     }
 
     private static Stream<Record> records(File file) {
-        System.out.println(Thread.currentThread().getName());
         String jsonArray = null;
         try {
             jsonArray = new BufferedReader(new FileReader(file)).readLine();
