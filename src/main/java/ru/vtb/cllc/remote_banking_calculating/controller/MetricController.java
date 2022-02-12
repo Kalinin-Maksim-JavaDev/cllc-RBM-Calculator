@@ -33,16 +33,16 @@ public class MetricController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("")
-    public ResponseEntity<Map<LocalDate, AHT>> getAHT(@RequestParam Long id_user) {
+    public ResponseEntity<Map<Integer, AHT>> getAHT(@RequestParam Long id_user) {
 
         System.out.printf("id: %d ", id_user);
         System.out.println();
 
         long start = System.currentTimeMillis();
-        Map<LocalDate, AHT> byDate = new HashMap<>();
+        Map<Integer, AHT> byDate = new HashMap<>();
         records.stream()
                 .filter(record -> Objects.isNull(id_user) || record.id_user==id_user)
-                .collect(Collectors.groupingBy(Record::getDate)).forEach((date, recs) -> {
+                .collect(Collectors.groupingBy(Record::getMonth)).forEach((date, recs) -> {
                     AHT ahtTask = recs.stream()
                             .parallel()
                             .collect(Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity()));
@@ -115,12 +115,12 @@ public class MetricController {
         MetricController controller = new MetricController(records);
 
         {
-            ResponseEntity<Map<LocalDate, AHT>> aht = controller.getAHT(minCountId);
+            var aht = controller.getAHT(minCountId);
             System.out.printf("aht: %s ", aht);
             System.out.println();
         }
         {
-            ResponseEntity<Map<LocalDate, AHT>> aht = controller.getAHT(maxCountId);
+            var aht = controller.getAHT(maxCountId);
             System.out.printf("aht: %s ", aht);
             System.out.println();
         }
