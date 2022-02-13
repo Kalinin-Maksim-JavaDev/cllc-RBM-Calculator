@@ -6,8 +6,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 public class Record {
-    @JsonProperty("Date")
-    public String dateAsString;
+
     @JsonProperty("Hour")
     public int hour;
     @JsonProperty("Id_user")
@@ -44,9 +43,8 @@ public class Record {
     private int month;
     private long epochDay;
 
-
-    public void setDateAsString(String dateAsString) {
-        this.dateAsString = dateAsString;
+    @JsonProperty("Date")
+    public void setDate(String dateAsString) {
         LocalDate date = LocalDate.parse(dateAsString, DateTimeFormatter.ISO_DATE);
         month = date.getMonthValue();
         epochDay = date.toEpochDay();
