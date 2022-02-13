@@ -156,7 +156,7 @@ public class MetricController <T>  {
         {
             System.out.println("----------------------");
             System.out.println("by date: ");
-            MetricController controller = new MetricController<>(records, Record::getDate);
+            MetricController controller = new MetricController<>(records, Record::getEpochDay);
 
             {
                 var aht = controller.getAHT(null);

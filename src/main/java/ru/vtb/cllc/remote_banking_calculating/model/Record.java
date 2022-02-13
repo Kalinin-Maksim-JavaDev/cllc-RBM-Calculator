@@ -41,16 +41,19 @@ public class Record {
     @JsonProperty("T_wait")
     public int t_wait;
 
-    public LocalDate date;
+    private int month;
+    private long epochDay;
 
 
     public void setDateAsString(String dateAsString) {
         this.dateAsString = dateAsString;
-        date = LocalDate.parse(dateAsString, DateTimeFormatter.ISO_DATE);
+        LocalDate date = LocalDate.parse(dateAsString, DateTimeFormatter.ISO_DATE);
+        month = date.getMonthValue();
+        epochDay = date.toEpochDay();
     }
 
-    public LocalDate getDate() {
-        return date;
+    public long getEpochDay() {
+        return epochDay;
     }
 
     public int getId_user() {
@@ -70,6 +73,6 @@ public class Record {
     }
 
     public int getMonth() {
-        return date.getMonthValue();
+        return month;
     }
 }
