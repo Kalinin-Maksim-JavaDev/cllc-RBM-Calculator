@@ -28,7 +28,7 @@ public class MetricController <T>  {
 
     final private List<Record> records;
     final private Function<Record, T> demension;
-    final boolean parraleled = true;
+    final boolean parraleled = false;
 
     public MetricController(List<Record> records, Function<Record, T> demension) {
         this.records = records;
