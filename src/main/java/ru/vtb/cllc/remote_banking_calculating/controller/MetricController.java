@@ -4,8 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.model.indicator.AHT;
@@ -28,7 +26,7 @@ public class MetricController <T>  {
 
     final private List<Record> records;
     final private Function<Record, T> demension;
-    final boolean parraleled = false;
+    final boolean paralleled = false;
 
     public MetricController(List<Record> records, Function<Record, T> demension) {
         this.records = records;
@@ -47,7 +45,7 @@ public class MetricController <T>  {
 
         long start = System.currentTimeMillis();
         Stream<Record> recordStream = records.stream();
-        if (parraleled) recordStream = recordStream.parallel();
+        if (paralleled) recordStream = recordStream.parallel();
         ForkJoinPool forkJoinPool = new ForkJoinPool(20);
 
         Stream<Record> finalRecordStream = recordStream;
