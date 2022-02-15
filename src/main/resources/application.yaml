@@ -9,4 +9,6 @@ spring:
     password: ${PGSQL_PASSWORD:filit}
   jpa:
     hibernate:
-      ddl-auto: none
+  #      ddl-auto: create
+  liquibase:
+#    enabled: false

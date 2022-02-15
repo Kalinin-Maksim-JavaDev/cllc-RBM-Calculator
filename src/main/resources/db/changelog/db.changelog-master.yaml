@@ -1,5 +1,3 @@
 databaseChangeLog:
   - include:
-      file: db/changelog/init/create/master.xml
-  - include:
-      file: db/changelog/init/insert/master.xml
+      file: db/changelog/init/master.xml
