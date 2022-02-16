@@ -1,5 +1,5 @@
 server:
-  servlet.context-path: /api
+#  servlet.context-path: /api
 
 spring:
   datasource:
@@ -9,6 +9,6 @@ spring:
     password: ${PGSQL_PASSWORD:filit}
   jpa:
     hibernate:
-  #      ddl-auto: create
+      ddl-auto: none
   liquibase:
-#    enabled: false
+    enabled: true
