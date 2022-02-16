@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.util.StringUtils;
+import ru.vtb.cllc.remote_banking_calculating.model.Record;
 
 import javax.tools.JavaCompiler;
 import javax.tools.StandardLocation;
@@ -37,7 +38,7 @@ public class CodeGenerator {
         compiler = ToolProvider.getSystemJavaCompiler();
     }
 
-    Class createFunction(String name, String exp, String type) {
+    Class createFunction(String name, String exp, String type, String sourceName) {
 
         log.debug("try generate class-function: '%s' - name; '%s' - operator", name, exp);
 
@@ -48,12 +49,13 @@ public class CodeGenerator {
 
         var javaClassName = "indicator-".concat(name);
 
+        var className = capitalize(name.toLowerCase());
         var bodyBuilder = new StringBuilder()
-                .append(format("public class %s{\n", capitalize(name.toLowerCase())))
+                .append(format("public class %s{\n", className))
                 .append("\n")
-                .append(format("   public %s apply(Record record) {\n", operator.getType()));
+                .append(format("   public %s apply(%s src) {\n", operator.getType(), sourceName));
         for (var arg : operator.getArgs())
-            bodyBuilder.append(format("final %s %s = record.%s;\n", arg.getType(), arg.getName(), arg.getName()));
+            bodyBuilder.append(format("final %s %s = src.%s;\n", arg.getType(), arg.getName(), arg.getName()));
         bodyBuilder.append(format("       return %s;\n", operator.body))
                 .append("   }\n")
                 .append("}")
@@ -62,7 +64,7 @@ public class CodeGenerator {
         var classBody = bodyBuilder.toString();
 
         try {
-            return new URLClassLoader(new URL[]{compile(writeDown(javaClassName, classBody))}).loadClass("Hello");
+            return new URLClassLoader(new URL[]{compile(writeDown(javaClassName, classBody))}).loadClass(className);
         } catch (ClassNotFoundException e) {
             throw new CodeGenerateException(e.getMessage());
         }
@@ -146,7 +148,7 @@ public class CodeGenerator {
     public static void main(String[] args) {
         var codeGenerator = new CodeGenerator();
         try {
-            codeGenerator.createFunction("sum", " a_2, b333 -> a_2+  b333", "long");
+            codeGenerator.createFunction("sum", " a_2, b333 -> a_2+  b333", "long", Record.class.getName());
         } catch (CodeGenerateException e) {
             e.printStackTrace();
         }
