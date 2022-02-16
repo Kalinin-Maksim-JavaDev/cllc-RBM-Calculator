@@ -1,0 +1,8 @@
+type Group {
+	name: String,
+	groups: [Group]
+}
+
+type Query {
+	group(name: String): Group
+}
