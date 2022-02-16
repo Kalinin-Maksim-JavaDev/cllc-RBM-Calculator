@@ -1,14 +1,10 @@
 package ru.vtb.cllc.remote_banking_calculating.model.indicator;
 
-import lombok.AllArgsConstructor;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 public class AHT {
 
@@ -17,6 +13,7 @@ public class AHT {
     long recordsCount;
     Set<String> currentThreadNames = new HashSet<>();
     long t_ring,t_inb,t_hold,t_acw,n_inb;
+    long value;
 
     @Override
     public String toString() {
