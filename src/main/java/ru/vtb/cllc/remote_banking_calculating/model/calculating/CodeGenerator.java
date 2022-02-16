@@ -13,6 +13,7 @@ import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -38,7 +39,7 @@ public class CodeGenerator {
         compiler = ToolProvider.getSystemJavaCompiler();
     }
 
-    Class createFunction(String name, String exp, String type, String sourceName) {
+    Method createOperator(String name, String exp, String type, String sourceName) {
 
         log.debug("try generate class-function: '%s' - name; '%s' - operator", name, exp);
 
@@ -47,31 +48,33 @@ public class CodeGenerator {
 
         Operator operator = Operator.of(exp, type.toLowerCase());
 
-        var javaClassName = "indicator-".concat(name);
-
         var className = capitalize(name.toLowerCase());
+        var javaClassName = className.concat(".java");
+
         var bodyBuilder = new StringBuilder()
                 .append(format("public class %s{\n", className))
                 .append("\n")
-                .append(format("   public %s apply(%s src) {\n", operator.getType(), sourceName));
+                .append(format("   public static %s apply(%s src) {\n", operator.getType(), sourceName));
         for (var arg : operator.getArgs())
-            bodyBuilder.append(format("final %s %s = src.%s;\n", arg.getType(), arg.getName(), arg.getName()));
-        bodyBuilder.append(format("       return %s;\n", operator.body))
+            bodyBuilder.append(format("     final %s %s = src.%s;\n", arg.getType(), arg.getName(), arg.getName()));
+        bodyBuilder.append(format("     return %s;\n", operator.body))
                 .append("   }\n")
                 .append("}")
                 .toString();
 
         var classBody = bodyBuilder.toString();
 
+        Class clazz;
         try {
-            return new URLClassLoader(new URL[]{compile(writeDown(javaClassName, classBody))}).loadClass(className);
-        } catch (ClassNotFoundException e) {
+            clazz = new URLClassLoader(new URL[]{compile(writeDown(javaClassName, classBody))}).loadClass(className);
+            return clazz.getDeclaredMethods()[0];
+        } catch (Exception e) {
             throw new CodeGenerateException(e.getMessage());
         }
     }
 
-    private File writeDown(String name, String text) {
-        var tmpFile = tmpdir.resolve(name.concat(".java")).toFile();
+    private File writeDown(String fileName, String text) {
+        var tmpFile = tmpdir.resolve(fileName).toFile();
 
         try (var writer = new FileWriter(tmpFile);) {
             writer.write(text);
@@ -148,8 +151,13 @@ public class CodeGenerator {
     public static void main(String[] args) {
         var codeGenerator = new CodeGenerator();
         try {
-            codeGenerator.createFunction("sum", " a_2, b333 -> a_2+  b333", "long", Record.class.getName());
-        } catch (CodeGenerateException e) {
+            var method = codeGenerator.createOperator("sum", " t_ring , t_inb , t_hold ,  t_acw, n_inb -> (t_ring + t_inb + t_hold + t_acw) / n_inb", "long", Record.class.getName());
+            var record = new Record();
+            record.t_ring = 10;
+            record.n_inb = 2;
+            Object result = method.invoke(null, record);
+            System.out.println(result);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
