@@ -6,11 +6,11 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.util.StringUtils;
 
 import javax.tools.JavaCompiler;
-import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -27,23 +27,22 @@ public class CodeGenerator {
 
     private static final Pattern LAMBDA_PATTERN = Pattern.compile("((,)*([a-zA-Z1-9_])*)*->");
     private final Path tmpdir;
+    private final JavaCompiler compiler;
 
     @SneakyThrows
     public CodeGenerator() {
-        this.tmpdir = Files.createTempDirectory("generated");
-        ;
+        tmpdir = Files.createTempDirectory("generated");
+        compiler = ToolProvider.getSystemJavaCompiler();
     }
 
-    Class createFunction(String name, String exp) throws CodeGenerateException {
+    Class createFunction(String name, String exp, Class<?> type) {
 
         log.debug("try generate class-function: '%s' - name; '%s' - lambda", name, exp);
 
         Objects.requireNonNull(name, "name must not be null");
         Objects.requireNonNull(exp, "expression must not be null");
 
-        exp = StringUtils.trimAllWhitespace(exp);
-
-        checkExpression(exp);
+        Lambda lambda = Lambda.of(exp);
 
         var javaClassName = "indicator-".concat(name);
 
@@ -56,42 +55,43 @@ public class CodeGenerator {
                 .append("}")
                 .toString();
 
-        var tmpFile = writeDown(javaClassName, classBody);
-
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        StandardJavaFileManager fileManager =
-                compiler.getStandardFileManager(null, null, null);
-        fileManager.setLocation(StandardLocation.CLASS_OUTPUT,
-                Arrays.asList(tmpdir.toFile()));
-        // Compile the file
-        compiler.getTask(null,
-                        fileManager,
-                        null,
-                        null,
-                        null,
-                        fileManager.getJavaFileObjectsFromFiles(Arrays.asList(tmpFile)))
-                .call();
-        fileManager.close();
-
-        var clazz = new URLClassLoader(new URL[]{tmpdir.toUri().toURL()}).loadClass("Hello");
+        Class<?> clazz = null;
+        try {
+            clazz = new URLClassLoader(new URL[]{compile(writeDown(javaClassName, classBody))}).loadClass("Hello");
+        } catch (ClassNotFoundException e) {
+            throw new CodeGenerateException(e.getMessage());
+        }
 
         return clazz;
     }
 
-    private void checkExpression(String exp) {
-        Matcher m = LAMBDA_PATTERN.matcher(exp);
-        var validInput = m.matches();
-        if (!validInput)
-            throw new CodeGenerateException("bad expression: \"" + exp + "\"");
-    }
-
-    @SneakyThrows
     private File writeDown(String name, String text) {
         var tmpFile = tmpdir.resolve(name.concat(".java")).toFile();
-        var writer = new FileWriter(tmpFile);
-        writer.write(text);
-        writer.close();
-        return tmpFile;
+
+        try (var writer = new FileWriter(tmpFile);) {
+            writer.write(text);
+            return tmpFile;
+        } catch (IOException e) {
+            throw new CodeGenerateException(e.getMessage());
+        }
+    }
+
+    private URL compile(File tmpFile) {
+        try (var fileManager = compiler.getStandardFileManager(null, null, null);) {
+
+            fileManager.setLocation(StandardLocation.CLASS_OUTPUT,
+                    Arrays.asList(tmpdir.toFile()));
+            compiler.getTask(null,
+                            fileManager,
+                            null,
+                            null,
+                            null,
+                            fileManager.getJavaFileObjectsFromFiles(Arrays.asList(tmpFile)))
+                    .call();
+            return tmpdir.toUri().toURL();
+        } catch (IOException e) {
+            throw new CodeGenerateException(e.getMessage());
+        }
     }
 
     @AllArgsConstructor
@@ -100,6 +100,11 @@ public class CodeGenerator {
         final private String body;
 
         static Lambda of(String exp) {
+
+            exp = StringUtils.trimAllWhitespace(exp);
+
+            checkExpression(exp);
+
             var parts = exp.split("->");
 
             var argst = parts[0];
@@ -108,12 +113,19 @@ public class CodeGenerator {
 
             return new Lambda(args, body);
         }
+
+        private static void checkExpression(String exp) {
+            Matcher m = LAMBDA_PATTERN.matcher(exp);
+            var validInput = m.matches();
+            if (!validInput)
+                throw new CodeGenerateException("bad expression: \"" + exp + "\"");
+        }
     }
 
     public static void main(String[] args) {
         var codeGenerator = new CodeGenerator();
         try {
-            codeGenerator.createFunction("sum", " a_2, b333 -> a_2+  b333");
+            codeGenerator.createFunction("sum", " a_2, b333 -> a_2+  b333", Long.class);
         } catch (CodeGenerateException e) {
             e.printStackTrace();
         }
