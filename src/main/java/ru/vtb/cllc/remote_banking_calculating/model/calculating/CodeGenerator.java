@@ -1,6 +1,7 @@
 package ru.vtb.cllc.remote_banking_calculating.model.calculating;
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.util.StringUtils;
@@ -20,12 +21,13 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.lang.String.format;
 import static org.springframework.util.StringUtils.capitalize;
 
 @Log4j2
 public class CodeGenerator {
 
-    private static final Pattern LAMBDA_PATTERN = Pattern.compile("((,)*([a-zA-Z1-9_])*)*->");
+    private static final Pattern LAMBDA_PATTERN = Pattern.compile("((,)*([a-zA-Z1-9_])*)*->(.)*");
     private final Path tmpdir;
     private final JavaCompiler compiler;
 
@@ -35,34 +37,35 @@ public class CodeGenerator {
         compiler = ToolProvider.getSystemJavaCompiler();
     }
 
-    Class createFunction(String name, String exp, Class<?> type) {
+    Class createFunction(String name, String exp, String type) {
 
-        log.debug("try generate class-function: '%s' - name; '%s' - lambda", name, exp);
+        log.debug("try generate class-function: '%s' - name; '%s' - operator", name, exp);
 
         Objects.requireNonNull(name, "name must not be null");
         Objects.requireNonNull(exp, "expression must not be null");
 
-        Lambda lambda = Lambda.of(exp);
+        Operator operator = Operator.of(exp, type.toLowerCase());
 
         var javaClassName = "indicator-".concat(name);
 
-        var classBody = new StringBuilder()
-                .append(String.format("public class %s{\n", capitalize(name.toLowerCase())))
+        var bodyBuilder = new StringBuilder()
+                .append(format("public class %s{\n", capitalize(name.toLowerCase())))
                 .append("\n")
-                .append("   public long apply(long a, long b) {\n")
-                .append("       return op.applyAsLong(a, b);\n")
+                .append(format("   public %s apply(Record record) {\n", operator.getType()));
+        for (var arg : operator.getArgs())
+            bodyBuilder.append(format("final %s %s = record.%s;\n", arg.getType(), arg.getName(), arg.getName()));
+        bodyBuilder.append(format("       return %s;\n", operator.body))
                 .append("   }\n")
                 .append("}")
                 .toString();
 
-        Class<?> clazz = null;
+        var classBody = bodyBuilder.toString();
+
         try {
-            clazz = new URLClassLoader(new URL[]{compile(writeDown(javaClassName, classBody))}).loadClass("Hello");
+            return new URLClassLoader(new URL[]{compile(writeDown(javaClassName, classBody))}).loadClass("Hello");
         } catch (ClassNotFoundException e) {
             throw new CodeGenerateException(e.getMessage());
         }
-
-        return clazz;
     }
 
     private File writeDown(String name, String text) {
@@ -94,12 +97,14 @@ public class CodeGenerator {
         }
     }
 
+    @Data
     @AllArgsConstructor
-    private static class Lambda {
-        final private String[] args;
-        final private String body;
+    private static class Operator {
+        private final String type;
+        private final Argument[] args;
+        private final String body;
 
-        static Lambda of(String exp) {
+        static Operator of(String exp, String type) {
 
             exp = StringUtils.trimAllWhitespace(exp);
 
@@ -107,11 +112,20 @@ public class CodeGenerator {
 
             var parts = exp.split("->");
 
-            var argst = parts[0];
             var body = parts[1];
-            String[] args = argst.split(",");
+            var names = parts[0].split(",");
+            Argument[] args = new Argument[names.length];
+            for (int i = 0; i < names.length; i++)
+                args[i] = new Argument(type, names[i]);
 
-            return new Lambda(args, body);
+            return new Operator(type, args, body);
+        }
+
+        public String getSignature() {
+            var result = new StringBuilder();
+            for (var p : args)
+                result.append(type + p);
+            return result.toString();
         }
 
         private static void checkExpression(String exp) {
@@ -122,10 +136,17 @@ public class CodeGenerator {
         }
     }
 
+    @Data
+    @AllArgsConstructor
+    private static class Argument {
+        String type;
+        String name;
+    }
+
     public static void main(String[] args) {
         var codeGenerator = new CodeGenerator();
         try {
-            codeGenerator.createFunction("sum", " a_2, b333 -> a_2+  b333", Long.class);
+            codeGenerator.createFunction("sum", " a_2, b333 -> a_2+  b333", "long");
         } catch (CodeGenerateException e) {
             e.printStackTrace();
         }
