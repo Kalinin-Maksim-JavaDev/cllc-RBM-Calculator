@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.model.indicator.AHT;
+import ru.vtb.cllc.remote_banking_calculating.model.indicator.GenericIndicator;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,14 +27,14 @@ public class MetricService<T> {
 
     final private List<Record> records;
     final private Function<Record, T> demension;
-    final boolean paralleled = false;
+    final boolean paralleled = true;
 
     public MetricService(List<Record> records, Function<Record, T> demension) {
         this.records = records;
         this.demension = demension;
     }
 
-    public Map<T, AHT> getAHT(Long id_user) {
+    public Map<T, GenericIndicator> getAHT(Long id_user) {
 
         AHT.summingTime.set(0);
         AHT.aggregateTime.set(0);
@@ -47,11 +48,12 @@ public class MetricService<T> {
         ForkJoinPool forkJoinPool = new ForkJoinPool(20);
 
         Stream<Record> finalRecordStream = recordStream;
-        Map<T, AHT> group = null;
+        Map<T, GenericIndicator> group = null;
         try {
             group = forkJoinPool.submit(() ->
                             finalRecordStream.filter(record -> Objects.isNull(id_user) || record.id_user == id_user)
-                                    .collect(Collectors.groupingByConcurrent(demension, Collector.of(AHT::new, AHT::add, AHT::sum, Function.identity()))))
+                                    .collect(Collectors.groupingBy(demension,
+                                            Collector.of(() -> new AHT(), (GenericIndicator ind, Record record) -> ind.add(record), GenericIndicator::sum, Function.identity()))))
                     .get();
         } catch (InterruptedException e) {
             e.printStackTrace();

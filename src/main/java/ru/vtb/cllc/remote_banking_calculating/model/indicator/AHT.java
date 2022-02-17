@@ -6,54 +6,59 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class AHT {
+public class AHT extends GenericIndicator {
 
     public static AtomicLong summingTime = new AtomicLong();
     public static AtomicLong aggregateTime = new AtomicLong();
     long recordsCount;
     Set<String> currentThreadNames = new HashSet<>();
-    long t_ring,t_inb,t_hold,t_acw,n_inb;
+    long t_ring, t_inb, t_hold, t_acw, n_inb;
     long value;
 
     @Override
     public String toString() {
         return "AHT{" +
                 "recordsCount=" + recordsCount +
-                ", aht=" + aht() +
+                ", aht=" + value() +
                 ", currentThreadNames=" + currentThreadNames +
                 '}';
     }
 
+    @Override
     public void add(Record record){
         long start = System.currentTimeMillis();;
         recordsCount++;
         currentThreadNames.add(Thread.currentThread().getName()
                 .replace("ForkJoinPool.commonPool-worker-", "")
                 .replace("ForkJoinPool-1-worker-", ""));
-        t_ring+=record.t_ring;
-        t_inb+=record.t_inb;
-        t_hold+=record.t_hold;
-        t_acw+=record.t_acw;
-        n_inb+=record.n_inb;
+        t_ring += record.t_ring;
+        t_inb += record.t_inb;
+        t_hold += record.t_hold;
+        t_acw += record.t_acw;
+        n_inb += record.n_inb;
         summingTime.addAndGet(System.currentTimeMillis() - start);
     }
-    public static AHT sum(AHT...arr){
-        long start = System.currentTimeMillis();;
-        AHT aht = new AHT();
-        for (var a:arr){
-            aht.t_ring+=a.t_ring;
-            aht.t_inb+=a.t_inb;
-            aht.t_hold+=a.t_hold;
-            aht.t_acw+=a.t_acw;
-            aht.n_inb+=a.n_inb;
-            aht.recordsCount+=a.recordsCount;
-            aht.currentThreadNames.addAll(a.currentThreadNames);
-        }
+
+    @Override
+    public void add(GenericIndicator other) {
+        long start = System.currentTimeMillis();
+        ;
+        t_ring += ((AHT) other).t_ring;
+        t_inb += ((AHT) other).t_inb;
+        t_hold += ((AHT) other).t_hold;
+        t_acw += ((AHT) other).t_acw;
+        n_inb += ((AHT) other).n_inb;
+        recordsCount += ((AHT) other).recordsCount;
+        currentThreadNames.addAll(((AHT) other).currentThreadNames);
         aggregateTime.addAndGet(System.currentTimeMillis() - start);
-        return aht;
     }
-    public long aht() {
-        if (n_inb==0) return 0;
-        return (t_ring + t_inb + t_hold + t_acw) / n_inb;
+
+    @Override
+    public long value() {
+        try {
+            return (t_ring + t_inb + t_hold + t_acw) / n_inb;
+        } catch (ArithmeticException ex) {
+            return 0;
+        }
     }
 }
