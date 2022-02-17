@@ -2,7 +2,7 @@ package ru.vtb.cllc.remote_banking_calculating.scheduling;
 
 import org.springframework.stereotype.Component;
 import ru.vtb.cllc.remote_banking_calculating.dao.IndicatorFormulaRepository;
-import ru.vtb.cllc.remote_banking_calculating.model.calculating.FormulaRegistry;
+import ru.vtb.cllc.remote_banking_calculating.model.calculating.IndicatorRegistry;
 
 import java.time.LocalDate;
 
@@ -10,7 +10,7 @@ import java.time.LocalDate;
 public class FormulasLoader {
 
     IndicatorFormulaRepository repository;
-    FormulaRegistry registry;
+    IndicatorRegistry registry;
 
     public void load() {
 

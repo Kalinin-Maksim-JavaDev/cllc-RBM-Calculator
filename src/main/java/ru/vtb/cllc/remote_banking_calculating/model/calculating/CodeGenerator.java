@@ -178,18 +178,15 @@ public class CodeGenerator {
         String name;
     }
 
+    @SneakyThrows
     public static void main(String[] args) {
         var codeGenerator = new CodeGenerator();
-        try {
-            var clazz = codeGenerator.createIndicatorClass("AHT", " t_ring , t_inb , t_hold ,  t_acw, n_inb -> (t_ring + t_inb + t_hold + t_acw) / n_inb", "long", Record.class.getName());
-            GenericIndicator indicator = (GenericIndicator) clazz.getDeclaredConstructor().newInstance();
-            var record = new Record();
-            record.t_ring = 10;
-            record.n_inb = 2;
-            indicator.add(record);
-            System.out.println(indicator.value());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        var clazz = codeGenerator.createIndicatorClass("AHT", " t_ring , t_inb , t_hold ,  t_acw, n_inb -> (t_ring + t_inb + t_hold + t_acw) / n_inb", "long", Record.class.getName());
+        GenericIndicator indicator = (GenericIndicator) clazz.getDeclaredConstructor().newInstance();
+        var record = new Record();
+        record.t_ring = 10;
+        record.n_inb = 2;
+        indicator.add(record);
+        System.out.println(indicator.value());
     }
 }

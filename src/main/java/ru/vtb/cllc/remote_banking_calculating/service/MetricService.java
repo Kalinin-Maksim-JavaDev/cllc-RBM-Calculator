@@ -3,8 +3,11 @@ package ru.vtb.cllc.remote_banking_calculating.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
+import ru.vtb.cllc.remote_banking_calculating.model.calculating.CodeGenerator;
+import ru.vtb.cllc.remote_banking_calculating.model.calculating.IndicatorRegistry;
 import ru.vtb.cllc.remote_banking_calculating.model.indicator.AHT;
 import ru.vtb.cllc.remote_banking_calculating.model.indicator.GenericIndicator;
 
@@ -23,16 +26,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
+@AllArgsConstructor
 public class MetricService<T> {
 
     final private List<Record> records;
     final private Function<Record, T> demension;
-    final boolean paralleled = true;
+    final private boolean paralleled = true;
 
-    public MetricService(List<Record> records, Function<Record, T> demension) {
-        this.records = records;
-        this.demension = demension;
-    }
+    final private IndicatorRegistry indicatorRegistry;
 
     public Map<T, GenericIndicator> getAHT(Long id_user) {
 
@@ -47,13 +48,15 @@ public class MetricService<T> {
         if (paralleled) recordStream = recordStream.parallel();
         ForkJoinPool forkJoinPool = new ForkJoinPool(20);
 
+        GenericIndicator indicator = indicatorRegistry.get("AHT");
+
         Stream<Record> finalRecordStream = recordStream;
         Map<T, GenericIndicator> group = null;
         try {
             group = forkJoinPool.submit(() ->
                             finalRecordStream.filter(record -> Objects.isNull(id_user) || record.id_user == id_user)
-                                    .collect(Collectors.groupingBy(demension,
-                                            Collector.of(() -> new AHT(), (GenericIndicator ind, Record record) -> ind.add(record), GenericIndicator::sum, Function.identity()))))
+                                    .collect(Collectors.groupingByConcurrent(demension,
+                                            Collector.of(() -> indicator, (GenericIndicator ind, Record record) -> ind.add(record), GenericIndicator::sum, Function.identity()))))
                     .get();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -133,7 +136,7 @@ public class MetricService<T> {
         {
             System.out.println("----------------------");
             System.out.println("by month: ");
-            MetricService controller = new MetricService<>(records, Record::getMonth);
+            MetricService controller = new MetricService<>(records, Record::getMonth, new IndicatorRegistry(new CodeGenerator()));
 
             {
                 var aht = controller.getAHT(null);
@@ -154,7 +157,7 @@ public class MetricService<T> {
         {
             System.out.println("----------------------");
             System.out.println("by date: ");
-            MetricService controller = new MetricService<>(records, Record::getEpochDay);
+            MetricService controller = new MetricService<>(records, Record::getEpochDay, new IndicatorRegistry(new CodeGenerator()));
 
             {
                 var aht = controller.getAHT(null);
