@@ -42,7 +42,6 @@ public class AHT extends GenericIndicator {
     @Override
     public void add(GenericIndicator other) {
         long start = System.currentTimeMillis();
-        ;
         t_ring += ((AHT) other).t_ring;
         t_inb += ((AHT) other).t_inb;
         t_hold += ((AHT) other).t_hold;
