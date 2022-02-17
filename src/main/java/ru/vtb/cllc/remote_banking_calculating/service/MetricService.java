@@ -29,9 +29,9 @@ import java.util.stream.Stream;
 @AllArgsConstructor
 public class MetricService<T> {
 
-    final private List<Record> records;
-    final private Function<Record, T> demension;
-    final private boolean paralleled = true;
+    private final List<Record> records;
+    private final Function<Record, T> demension;
+    private final boolean paralleled = true;
 
     final private IndicatorRegistry indicatorRegistry;
 
