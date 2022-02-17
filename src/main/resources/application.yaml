@@ -10,5 +10,13 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+    show-sql: true
   liquibase:
     enabled: true
+
+cllc:
+  formulas-loading:
+    enabled: true
+    scheduler:
+      fixedRate: ${CLLC_FORMULAS_LOAD_EVERYMIN:15}
+      cron: ${CLLC_FORMULAS_LOAD_ON}
