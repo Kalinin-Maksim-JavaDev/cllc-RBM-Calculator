@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.util.StringUtils;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
+import ru.vtb.cllc.remote_banking_calculating.model.indicator.GenericIndicator;
 
 import javax.tools.JavaCompiler;
 import javax.tools.StandardLocation;
@@ -13,7 +14,6 @@ import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.springframework.util.StringUtils.capitalize;
@@ -30,6 +31,7 @@ import static org.springframework.util.StringUtils.capitalize;
 public class CodeGenerator {
 
     private static final Pattern LAMBDA_PATTERN = Pattern.compile("((,)*([a-zA-Z1-9_])*)*->(.)*");
+    private static final String GENERIC_INDICATOR_NAME = GenericIndicator.class.getName();
     private final Path tmpdir;
     private final JavaCompiler compiler;
 
@@ -39,9 +41,9 @@ public class CodeGenerator {
         compiler = ToolProvider.getSystemJavaCompiler();
     }
 
-    Method createOperator(String name, String exp, String type, String sourceName) {
+    Class<?> createIndicatorClass(String name, String exp, String type, String sourceName) {
 
-        log.debug("try generate class-function: '%s' - name; '%s' - operator", name, exp);
+        log.debug("try generate indicator: '{}' - name; '{}' - operator", name, exp);
 
         Objects.requireNonNull(name, "name must not be null");
         Objects.requireNonNull(exp, "expression must not be null");
@@ -52,13 +54,42 @@ public class CodeGenerator {
         var javaClassName = className.concat(".java");
 
         var bodyBuilder = new StringBuilder()
-                .append(format("public class %s{\n", className))
+                .append(format("public class %s extends %s{\n", className, GENERIC_INDICATOR_NAME))
                 .append("\n")
-                .append(format("   public static %s apply(%s src) {\n", operator.getType(), sourceName));
+                .append(format("    %s %s;\n", operator.getType(), Arrays.stream(operator.getArgs()).map(Argument::getName).collect(Collectors.joining(","))))
+                .append("\n")
+                .append("    @Override")
+                .append("\n")
+                .append(format("    public void add(%s src){\n", sourceName));
         for (var arg : operator.getArgs())
-            bodyBuilder.append(format("     final %s %s = src.%s;\n", arg.getType(), arg.getName(), arg.getName()));
-        bodyBuilder.append(format("     return %s;\n", operator.body))
-                .append("   }\n")
+            bodyBuilder
+                    .append(format("        %s+=src.%s;\n", arg.getName(), arg.getName()));
+        bodyBuilder
+                .append("    }\n")
+                .append("    @Override")
+                .append("\n")
+                .append(format("    public void add(%s other){\n", GENERIC_INDICATOR_NAME));
+        for (var arg : operator.getArgs())
+            bodyBuilder
+                    .append(format("         %s+=(( %s) other).%s;\n", arg.getName(), className, arg.getName()));
+        bodyBuilder
+                .append("    }")
+                .append("\n")
+                .append("    @Override\n")
+                .append("    public long value() {\n")
+                .append("       try {            \n")
+                .append(format("            return %s;\n", operator.body))
+                .append("        }catch (ArithmeticException ex){\n")
+                .append("            return 0;\n")
+                .append("        }\n")
+                .append("    }\n")
+                .append("\n")
+                .append(format("    public static %s apply(%s src) {\n", operator.getType(), sourceName));
+        for (var arg : operator.getArgs())
+            bodyBuilder.append(format("        final %s %s = src.%s;\n", arg.getType(), arg.getName(), arg.getName()));
+        bodyBuilder
+                .append(format("        return %s;\n", operator.body))
+                .append("    }\n")
                 .append("}")
                 .toString();
 
@@ -66,8 +97,7 @@ public class CodeGenerator {
 
         Class clazz;
         try {
-            clazz = new URLClassLoader(new URL[]{compile(writeDown(javaClassName, classBody))}).loadClass(className);
-            return clazz.getDeclaredMethods()[0];
+            return new URLClassLoader(new URL[]{compile(writeDown(javaClassName, classBody))}).loadClass(className);
         } catch (Exception e) {
             throw new CodeGenerateException(e.getMessage());
         }
@@ -151,12 +181,13 @@ public class CodeGenerator {
     public static void main(String[] args) {
         var codeGenerator = new CodeGenerator();
         try {
-            var method = codeGenerator.createOperator("sum", " t_ring , t_inb , t_hold ,  t_acw, n_inb -> (t_ring + t_inb + t_hold + t_acw) / n_inb", "long", Record.class.getName());
+            var clazz = codeGenerator.createIndicatorClass("AHT", " t_ring , t_inb , t_hold ,  t_acw, n_inb -> (t_ring + t_inb + t_hold + t_acw) / n_inb", "long", Record.class.getName());
+            GenericIndicator indicator = (GenericIndicator) clazz.getDeclaredConstructor().newInstance();
             var record = new Record();
             record.t_ring = 10;
             record.n_inb = 2;
-            Object result = method.invoke(null, record);
-            System.out.println(result);
+            indicator.add(record);
+            System.out.println(indicator.value());
         } catch (Exception e) {
             e.printStackTrace();
         }
