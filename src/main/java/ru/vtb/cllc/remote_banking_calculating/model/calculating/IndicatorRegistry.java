@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.model.enity.IndicatorFormula;
-import ru.vtb.cllc.remote_banking_calculating.model.indicator.GenericIndicator;
+import ru.vtb.cllc.remote_banking_calculating.model.indicator.Indicator;
 
 import java.util.List;
 import java.util.Map;
@@ -27,10 +27,10 @@ public class IndicatorRegistry {
         }
     }
 
-    public GenericIndicator get(String name) {
+    public <T> List<Indicator<T>> get(String name) {
         var clazz = codeGenerator.createIndicatorClass("AHT", " t_ring , t_inb , t_hold ,  t_acw, n_inb -> (t_ring + t_inb + t_hold + t_acw) / n_inb", "long", Record.class.getName());
         try {
-            return (GenericIndicator) clazz.getDeclaredConstructor().newInstance();
+            return List.of((Indicator) clazz.getDeclaredConstructor().newInstance());
         } catch (Exception e) {
             throw new RuntimeException();
         }

@@ -11,7 +11,7 @@ import ru.vtb.cllc.remote_banking_calculating.dao.redis.ShowCaseRepository;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.model.calculating.CodeGenerator;
 import ru.vtb.cllc.remote_banking_calculating.model.calculating.IndicatorRegistry;
-import ru.vtb.cllc.remote_banking_calculating.model.indicator.GenericIndicator;
+import ru.vtb.cllc.remote_banking_calculating.model.indicator.Indicator;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -48,18 +48,19 @@ public class IndicatorService {
         this.indicatorRegistry = indicatorRegistry;
     }
 
-    public <T, E> Map<T, E> calculate(Long id_user, String indicators, Function<Record, T> demension) {
+    public <T, E> Map<T, Map<String, E>> calculate(Long id_user, String indicatorNames, Function<Record, T> demension) {
 
         List<ShowCase> showCases = showCaseRepository.get(LocalDate.of(2021, 12, 29));
 
-        long start = System.currentTimeMillis();
         Stream<Record> recordStream = Arrays.stream(showCases.get(0).getRecords());
 
-        GenericIndicator<E> indicator = indicatorRegistry.get(indicators);
+        List<Indicator<E>> indicators = indicatorRegistry.get(indicatorNames);
 
-        Map<T, E> group = recordStream
+        Map<T, Map<String, E>> group = recordStream
                 .filter(record -> Objects.isNull(id_user) || record.id_user == id_user)
-                .collect(groupingBy(demension, collectingAndThen(reducing(new Record(), Record::sum), record -> indicator.apply(record))));
+                .collect(groupingBy(demension, collectingAndThen(reducing(new Record(), Record::sum), record ->
+                        indicators.stream().collect(toMap(Object::toString, indicator -> indicator.apply(record)))
+                )));
 
         return group;
     }

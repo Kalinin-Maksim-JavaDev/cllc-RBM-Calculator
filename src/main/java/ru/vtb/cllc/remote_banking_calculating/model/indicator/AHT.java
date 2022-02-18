@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class AHT extends GenericIndicator {
+public class AHT extends Indicator {
 
     public static AtomicLong summingTime = new AtomicLong();
     public static AtomicLong aggregateTime = new AtomicLong();
@@ -40,7 +40,7 @@ public class AHT extends GenericIndicator {
     }
 
     @Override
-    public void add(GenericIndicator other) {
+    public void add(Indicator other) {
         long start = System.currentTimeMillis();
         t_ring += ((AHT) other).t_ring;
         t_inb += ((AHT) other).t_inb;

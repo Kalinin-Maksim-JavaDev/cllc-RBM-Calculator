@@ -7,7 +7,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
-import ru.vtb.cllc.remote_banking_calculating.model.indicator.GenericIndicator;
+import ru.vtb.cllc.remote_banking_calculating.model.indicator.Indicator;
 
 import javax.tools.JavaCompiler;
 import javax.tools.StandardLocation;
@@ -33,7 +33,7 @@ import static org.springframework.util.StringUtils.capitalize;
 public class CodeGenerator {
 
     private static final Pattern LAMBDA_PATTERN = Pattern.compile("((,)*([a-zA-Z1-9_])*)*->(.)*");
-    private static final String GENERIC_INDICATOR_NAME = GenericIndicator.class.getName();
+    private static final String GENERIC_INDICATOR_NAME = Indicator.class.getName();
     private final Path tmpdir;
     private final JavaCompiler compiler;
 
@@ -184,7 +184,7 @@ public class CodeGenerator {
     public static void main(String[] args) {
         var codeGenerator = new CodeGenerator();
         var clazz = codeGenerator.createIndicatorClass("AHT", " t_ring , t_inb , t_hold ,  t_acw, n_inb -> (t_ring + t_inb + t_hold + t_acw) / n_inb", "long", Record.class.getName());
-        GenericIndicator indicator = (GenericIndicator) clazz.getDeclaredConstructor().newInstance();
+        Indicator indicator = (Indicator) clazz.getDeclaredConstructor().newInstance();
         var record = new Record();
         record.t_ring = 10;
         record.n_inb = 2;
