@@ -14,9 +14,11 @@ spring:
   liquibase:
     enabled: true
 
+  redis:
+    host: cache
+    port: 6379
 cllc:
   formulas-loading:
     enabled: true
     scheduler:
       fixedRate: ${CLLC_FORMULAS_LOAD_EVERYMIN:15}
-      cron: ${CLLC_FORMULAS_LOAD_ON}

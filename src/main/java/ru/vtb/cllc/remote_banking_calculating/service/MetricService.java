@@ -3,8 +3,11 @@ package ru.vtb.cllc.remote_banking_calculating.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ru.vtb.cllc.remote_banking_calculating.dao.redis.ShowCase;
+import ru.vtb.cllc.remote_banking_calculating.dao.redis.ShowCaseRepository;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.model.calculating.CodeGenerator;
 import ru.vtb.cllc.remote_banking_calculating.model.calculating.IndicatorRegistry;
@@ -17,26 +20,37 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
-@AllArgsConstructor
-public class MetricService<T> {
+@Service
+public class MetricService {
 
-    private final List<Record> records;
-    private final Function<Record, T> demension;
-    private final boolean paralleled = true;
+    private ShowCaseRepository showCaseRepository;
+
+    private List<Record> records;
 
     final private IndicatorRegistry indicatorRegistry;
 
-    public Map<T, GenericIndicator> getAHT(Long id_user) {
+    @Autowired
+    public MetricService(ShowCaseRepository showCaseRepository, IndicatorRegistry indicatorRegistry) {
+        this.showCaseRepository = showCaseRepository;
+        this.indicatorRegistry = indicatorRegistry;
+    }
 
+    public MetricService(List<Record> records, IndicatorRegistry indicatorRegistry) {
+        this.records = records;
+        this.indicatorRegistry = indicatorRegistry;
+    }
+
+    public <T> Map<T, GenericIndicator> getAHT(Long id_user, Function<Record, T> demension) {
+
+        List<ShowCase> showCases = showCaseRepository.get(LocalDate.of(2021, 12, 29));
         AHT.summingTime.set(0);
         AHT.aggregateTime.set(0);
 
@@ -44,25 +58,16 @@ public class MetricService<T> {
         System.out.println();
 
         long start = System.currentTimeMillis();
-        Stream<Record> recordStream = records.stream();
-        if (paralleled) recordStream = recordStream.parallel();
-        ForkJoinPool forkJoinPool = new ForkJoinPool(20);
+        Stream<Record> recordStream = Arrays.stream(showCases.get(0).getRecords());
 
         GenericIndicator indicator = indicatorRegistry.get("AHT");
 
-        Stream<Record> finalRecordStream = recordStream;
-        Map<T, GenericIndicator> group = null;
-        try {
-            group = forkJoinPool.submit(() ->
-                            finalRecordStream.filter(record -> Objects.isNull(id_user) || record.id_user == id_user)
-                                    .collect(Collectors.groupingByConcurrent(demension,
-                                            Collector.of(() -> indicator, (GenericIndicator ind, Record record) -> ind.add(record), GenericIndicator::sum, Function.identity()))))
-                    .get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
+        Map<T, GenericIndicator> group = recordStream.filter(record -> Objects.isNull(id_user) || record.id_user == id_user)
+                .collect(Collectors.groupingBy(demension,
+                        Collector.of(() -> indicator,
+                                (GenericIndicator ind, Record record) -> ind.add(record),
+                                GenericIndicator::sum,
+                                Function.identity())));
 
 
         System.out.printf("%,d millisec for calculating", (System.currentTimeMillis() - start));
@@ -73,7 +78,6 @@ public class MetricService<T> {
         System.out.printf("aggregateTime: %,d ", AHT.aggregateTime.get());
         System.out.println();
         return group;
-        //return new ResponseEntity<>(byDate,  HttpStatus.OK);
     }
 
     private static Stream<Record> records(File file) {
@@ -136,20 +140,20 @@ public class MetricService<T> {
         {
             System.out.println("----------------------");
             System.out.println("by month: ");
-            MetricService controller = new MetricService<>(records, Record::getMonth, new IndicatorRegistry(new CodeGenerator()));
+            MetricService controller = new MetricService(records, new IndicatorRegistry(new CodeGenerator()));
 
             {
-                var aht = controller.getAHT(null);
+                var aht = controller.getAHT(null, Record::getMonth);
                 System.out.printf("aht: %s ", aht);
                 System.out.println();
             }
             {
-                var aht = controller.getAHT(minCountId);
+                var aht = controller.getAHT(minCountId, Record::getMonth);
                 System.out.printf("aht: %s ", aht);
                 System.out.println();
             }
             {
-                var aht = controller.getAHT(maxCountId);
+                var aht = controller.getAHT(maxCountId, Record::getMonth);
                 System.out.printf("aht: %s ", aht);
                 System.out.println();
             }
@@ -157,20 +161,20 @@ public class MetricService<T> {
         {
             System.out.println("----------------------");
             System.out.println("by date: ");
-            MetricService controller = new MetricService<>(records, Record::getEpochDay, new IndicatorRegistry(new CodeGenerator()));
+            MetricService controller = new MetricService(records, new IndicatorRegistry(new CodeGenerator()));
 
             {
-                var aht = controller.getAHT(null);
+                var aht = controller.getAHT(null, Record::getEpochDay);
                 System.out.printf("aht: %s ", aht);
                 System.out.println();
             }
             {
-                var aht = controller.getAHT(minCountId);
+                var aht = controller.getAHT(minCountId, Record::getEpochDay);
                 System.out.printf("aht: %s ", aht);
                 System.out.println();
             }
             {
-                var aht = controller.getAHT(maxCountId);
+                var aht = controller.getAHT(maxCountId, Record::getEpochDay);
                 System.out.printf("aht: %s ", aht);
                 System.out.println();
             }

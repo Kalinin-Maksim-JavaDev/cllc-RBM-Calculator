@@ -1,5 +1,21 @@
 version: '2.2'
 services:
+  cache:
+    container_name: cache
+    hostname: cache
+    image: redis:latest
+    ports:
+      - '6379:6379'
+  redis-commander:
+    container_name: redis-commander
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    build: .
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
   db:
     container_name: formules
     hostname: formules

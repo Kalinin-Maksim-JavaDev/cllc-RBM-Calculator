@@ -1,6 +1,6 @@
 package ru.vtb.cllc.remote_banking_calculating.model.calculating;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.model.enity.IndicatorFormula;
@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class IndicatorRegistry {
 
     private final CodeGenerator codeGenerator;
