@@ -11,7 +11,6 @@ import ru.vtb.cllc.remote_banking_calculating.dao.redis.ShowCaseRepository;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.model.calculating.CodeGenerator;
 import ru.vtb.cllc.remote_banking_calculating.model.calculating.IndicatorRegistry;
-import ru.vtb.cllc.remote_banking_calculating.model.indicator.AHT;
 import ru.vtb.cllc.remote_banking_calculating.model.indicator.GenericIndicator;
 
 import java.io.BufferedReader;
@@ -23,13 +22,14 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.*;
+
 @Slf4j
 @Service
-public class MetricService {
+public class IndicatorService {
 
     private ShowCaseRepository showCaseRepository;
 
@@ -38,45 +38,29 @@ public class MetricService {
     final private IndicatorRegistry indicatorRegistry;
 
     @Autowired
-    public MetricService(ShowCaseRepository showCaseRepository, IndicatorRegistry indicatorRegistry) {
+    public IndicatorService(ShowCaseRepository showCaseRepository, IndicatorRegistry indicatorRegistry) {
         this.showCaseRepository = showCaseRepository;
         this.indicatorRegistry = indicatorRegistry;
     }
 
-    public MetricService(List<Record> records, IndicatorRegistry indicatorRegistry) {
+    public IndicatorService(List<Record> records, IndicatorRegistry indicatorRegistry) {
         this.records = records;
         this.indicatorRegistry = indicatorRegistry;
     }
 
-    public <T> Map<T, GenericIndicator> getAHT(Long id_user, Function<Record, T> demension) {
+    public <T, E> Map<T, E> calculate(Long id_user, String indicators, Function<Record, T> demension) {
 
         List<ShowCase> showCases = showCaseRepository.get(LocalDate.of(2021, 12, 29));
-        AHT.summingTime.set(0);
-        AHT.aggregateTime.set(0);
-
-        System.out.printf("id: %d ", id_user);
-        System.out.println();
 
         long start = System.currentTimeMillis();
         Stream<Record> recordStream = Arrays.stream(showCases.get(0).getRecords());
 
-        GenericIndicator indicator = indicatorRegistry.get("AHT");
+        GenericIndicator<E> indicator = indicatorRegistry.get(indicators);
 
-        Map<T, GenericIndicator> group = recordStream.filter(record -> Objects.isNull(id_user) || record.id_user == id_user)
-                .collect(Collectors.groupingBy(demension,
-                        Collector.of(() -> indicator,
-                                (GenericIndicator ind, Record record) -> ind.add(record),
-                                GenericIndicator::sum,
-                                Function.identity())));
+        Map<T, E> group = recordStream
+                .filter(record -> Objects.isNull(id_user) || record.id_user == id_user)
+                .collect(groupingBy(demension, collectingAndThen(reducing(new Record(), Record::sum), record -> indicator.apply(record))));
 
-
-        System.out.printf("%,d millisec for calculating", (System.currentTimeMillis() - start));
-        System.out.println();
-
-        System.out.printf("summingTime: %,d ", AHT.summingTime.get());
-        System.out.println();
-        System.out.printf("aggregateTime: %,d ", AHT.aggregateTime.get());
-        System.out.println();
         return group;
     }
 
@@ -108,7 +92,7 @@ public class MetricService {
                     .map(Path::toFile).collect(Collectors.toList());
             records = files.stream()
                     .parallel()
-                    .flatMap(MetricService::records).collect(Collectors.toList());
+                    .flatMap(IndicatorService::records).collect(Collectors.toList());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -117,7 +101,7 @@ public class MetricService {
         System.out.println();
 
         long minCountId = records.stream()
-                .collect(Collectors.groupingBy(Record::getId_user, Collectors.counting()))
+                .collect(groupingBy(Record::getId_user, Collectors.counting()))
                 .entrySet()
                 .stream()
                 .sorted((e1, e2) -> (int) (e1.getValue() - e2.getValue()))
@@ -127,7 +111,7 @@ public class MetricService {
         System.out.printf("%d min count id", minCountId);
         System.out.println();
         long maxCountId = records.stream()
-                .collect(Collectors.groupingBy(Record::getId_user, Collectors.counting()))
+                .collect(groupingBy(Record::getId_user, Collectors.counting()))
                 .entrySet()
                 .stream()
                 .sorted((e1, e2) -> (int) -(e1.getValue() - e2.getValue()))
@@ -140,20 +124,20 @@ public class MetricService {
         {
             System.out.println("----------------------");
             System.out.println("by month: ");
-            MetricService controller = new MetricService(records, new IndicatorRegistry(new CodeGenerator()));
+            IndicatorService controller = new IndicatorService(records, new IndicatorRegistry(new CodeGenerator()));
 
             {
-                var aht = controller.getAHT(null, Record::getMonth);
+                var aht = controller.calculate(null, "AHT", Record::getMonth);
                 System.out.printf("aht: %s ", aht);
                 System.out.println();
             }
             {
-                var aht = controller.getAHT(minCountId, Record::getMonth);
+                var aht = controller.calculate(minCountId, "AHT", Record::getMonth);
                 System.out.printf("aht: %s ", aht);
                 System.out.println();
             }
             {
-                var aht = controller.getAHT(maxCountId, Record::getMonth);
+                var aht = controller.calculate(maxCountId, "AHT", Record::getMonth);
                 System.out.printf("aht: %s ", aht);
                 System.out.println();
             }
@@ -161,20 +145,20 @@ public class MetricService {
         {
             System.out.println("----------------------");
             System.out.println("by date: ");
-            MetricService controller = new MetricService(records, new IndicatorRegistry(new CodeGenerator()));
+            IndicatorService controller = new IndicatorService(records, new IndicatorRegistry(new CodeGenerator()));
 
             {
-                var aht = controller.getAHT(null, Record::getEpochDay);
+                var aht = controller.calculate(null, "AHT", Record::getEpochDay);
                 System.out.printf("aht: %s ", aht);
                 System.out.println();
             }
             {
-                var aht = controller.getAHT(minCountId, Record::getEpochDay);
+                var aht = controller.calculate(minCountId, "AHT", Record::getEpochDay);
                 System.out.printf("aht: %s ", aht);
                 System.out.println();
             }
             {
-                var aht = controller.getAHT(maxCountId, Record::getEpochDay);
+                var aht = controller.calculate(maxCountId, "AHT", Record::getEpochDay);
                 System.out.printf("aht: %s ", aht);
                 System.out.println();
             }

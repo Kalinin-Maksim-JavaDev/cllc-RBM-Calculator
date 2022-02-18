@@ -2,7 +2,9 @@ package ru.vtb.cllc.remote_banking_calculating.model.indicator;
 
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 
-public abstract class GenericIndicator {
+public abstract class GenericIndicator<T> {
+
+    public abstract T apply(Record record);
 
     public abstract void add(Record record);
 

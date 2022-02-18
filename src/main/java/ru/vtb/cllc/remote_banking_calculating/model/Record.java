@@ -73,4 +73,9 @@ public class Record {
     public int getMonth() {
         return month;
     }
+
+    public static Record sum(Record r1, Record r2) {
+        r1.n_inb += r1.n_inb;
+        return r1;
+    }
 }
