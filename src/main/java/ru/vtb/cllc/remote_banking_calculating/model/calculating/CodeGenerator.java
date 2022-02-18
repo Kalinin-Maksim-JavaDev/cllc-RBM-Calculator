@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.springframework.util.StringUtils.capitalize;
@@ -33,7 +32,7 @@ import static org.springframework.util.StringUtils.capitalize;
 public class CodeGenerator {
 
     private static final Pattern LAMBDA_PATTERN = Pattern.compile("((,)*([a-zA-Z1-9_])*)*->(.)*");
-    private static final String GENERIC_INDICATOR_NAME = Indicator.class.getName();
+    private static final String INDICATOR_INTERFACE_NAME = Indicator.class.getName();
     private final Path tmpdir;
     private final JavaCompiler compiler;
 
@@ -41,6 +40,10 @@ public class CodeGenerator {
     public CodeGenerator() {
         tmpdir = Files.createTempDirectory("generated");
         compiler = ToolProvider.getSystemJavaCompiler();
+    }
+
+    Class<?>[] createIndicatorClasses(String names, String exp, String type, String sourceName) {
+        return null;
     }
 
     Class<?> createIndicatorClass(String name, String exp, String type, String sourceName) {
@@ -56,37 +59,9 @@ public class CodeGenerator {
         var javaClassName = className.concat(".java");
 
         var bodyBuilder = new StringBuilder()
-                .append(format("public class %s extends %s{\n", className, GENERIC_INDICATOR_NAME))
+                .append(format("public class %s implements %s{\n", className, INDICATOR_INTERFACE_NAME))
                 .append("\n")
-                .append(format("    %s %s;\n", operator.getType(), Arrays.stream(operator.getArgs()).map(Argument::getName).collect(Collectors.joining(","))))
-                .append("\n")
-                .append("    @Override")
-                .append("\n")
-                .append(format("    public void add(%s src){\n", sourceName));
-        for (var arg : operator.getArgs())
-            bodyBuilder
-                    .append(format("        %s+=src.%s;\n", arg.getName(), arg.getName()));
-        bodyBuilder
-                .append("    }\n")
-                .append("    @Override")
-                .append("\n")
-                .append(format("    public void add(%s other){\n", GENERIC_INDICATOR_NAME));
-        for (var arg : operator.getArgs())
-            bodyBuilder
-                    .append(format("         %s+=(( %s) other).%s;\n", arg.getName(), className, arg.getName()));
-        bodyBuilder
-                .append("    }")
-                .append("\n")
-                .append("    @Override\n")
-                .append("    public long value() {\n")
-                .append("       try {            \n")
-                .append(format("            return %s;\n", operator.body))
-                .append("        }catch (ArithmeticException ex){\n")
-                .append("            return 0;\n")
-                .append("        }\n")
-                .append("    }\n")
-                .append("\n")
-                .append(format("    public static %s apply(%s src) {\n", operator.getType(), sourceName));
+                .append(format("    public %s apply(%s src) {\n", operator.getType(), sourceName));
         for (var arg : operator.getArgs())
             bodyBuilder.append(format("        final %s %s = src.%s;\n", arg.getType(), arg.getName(), arg.getName()));
         bodyBuilder
@@ -188,7 +163,6 @@ public class CodeGenerator {
         var record = new Record();
         record.t_ring = 10;
         record.n_inb = 2;
-        indicator.add(record);
-        System.out.println(indicator.value());
+        System.out.println(indicator.apply(record));
     }
 }

@@ -48,7 +48,7 @@ public class IndicatorService {
         this.indicatorRegistry = indicatorRegistry;
     }
 
-    public <T, E> Map<T, Map<String, E>> calculate(Long id_user, String indicatorNames, Function<Record, T> demension) {
+    public <T, E> Map<T, Map<String, E>> calculate(Long id_user, String[] indicatorNames, Function<Record, T> demension) {
 
         List<ShowCase> showCases = showCaseRepository.get(LocalDate.of(2021, 12, 29));
 

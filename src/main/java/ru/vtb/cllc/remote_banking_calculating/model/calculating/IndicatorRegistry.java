@@ -6,9 +6,11 @@ import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.model.enity.IndicatorFormula;
 import ru.vtb.cllc.remote_banking_calculating.model.indicator.Indicator;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -27,12 +29,19 @@ public class IndicatorRegistry {
         }
     }
 
-    public <T> List<Indicator<T>> get(String name) {
-        var clazz = codeGenerator.createIndicatorClass("AHT", " t_ring , t_inb , t_hold ,  t_acw, n_inb -> (t_ring + t_inb + t_hold + t_acw) / n_inb", "long", Record.class.getName());
-        try {
-            return List.of((Indicator) clazz.getDeclaredConstructor().newInstance());
-        } catch (Exception e) {
-            throw new RuntimeException();
-        }
+    public <T> List<Indicator<T>> get(String[] names) {
+        String[] sortedNames = names.clone();
+        Arrays.sort(sortedNames);
+        return map.entrySet().stream()
+                .filter(kv -> Arrays.binarySearch(sortedNames, kv.getKey()) >= 0)
+                .map(Map.Entry::getValue)
+                .map(c -> {
+                    try {
+                        return (Indicator<T>) c.getDeclaredConstructor().newInstance();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e.getMessage());
+                    }
+                })
+                .collect(Collectors.toList());
     }
 }
