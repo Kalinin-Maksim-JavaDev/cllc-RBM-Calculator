@@ -17,16 +17,17 @@ import java.util.stream.Collectors;
 public class IndicatorRegistry {
 
     private final CodeGenerator codeGenerator;
-    private final Map<String, Class> map = new ConcurrentHashMap<>();
+    private Map<String, Class> map = new ConcurrentHashMap<>();
 
     public void update(List<IndicatorFormula> all) {
-        map.clear();
+        Map<String, Class> mapNew = new ConcurrentHashMap<>();
         for (IndicatorFormula formula : all) {
-            map.put(formula.getName(), codeGenerator.createIndicatorClass(formula.getName(),
+            mapNew.put(formula.getName(), codeGenerator.createIndicatorClass(formula.getName(),
                     formula.getExpression(),
                     "long",
                     Record.class.getName()));
         }
+        map = mapNew;
     }
 
     public <T> List<Indicator<T>> get(String[] names) {
