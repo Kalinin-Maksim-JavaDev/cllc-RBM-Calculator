@@ -8,6 +8,8 @@ import ru.vtb.cllc.remote_banking_calculating.model.Group;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.service.IndicatorService;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Component
@@ -16,7 +18,7 @@ public class GroupResolver implements GraphQLQueryResolver {
 
     private final IndicatorService service;
 
-    public <G> Group group(String name, List<String> indicatorNames, Integer id_user) {
+    public <G> Group group(String name, List<String> indicatorNames, String begin, String end, Integer id_user) {
 
         Function<Record, G> demension = null;
 
@@ -28,7 +30,9 @@ public class GroupResolver implements GraphQLQueryResolver {
                 demension = record -> (G) record.getEpochDay();
                 break;
         }
-        var indicatorsGroup = service.calculate(id_user,
+        var indicatorsGroup = service.calculate(LocalDate.parse(begin, DateTimeFormatter.ISO_DATE),
+                LocalDate.parse(end, DateTimeFormatter.ISO_DATE),
+                id_user,
                 demension,
                 indicatorNames);
 

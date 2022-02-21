@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @Component
 class ShowCaseRedisSerializer implements RedisSerializer<ShowCase> {
@@ -25,6 +26,8 @@ class ShowCaseRedisSerializer implements RedisSerializer<ShowCase> {
 
     @Override
     public ShowCase deserialize(byte[] bytes) throws SerializationException {
+
+        if (Objects.isNull(bytes)) return new ShowCase(new Record[0]);
 
         objectMapper.configure(DeserializationFeature.USE_JAVA_ARRAY_FOR_JSON_ARRAY, true);
         try {

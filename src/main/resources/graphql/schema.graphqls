@@ -5,5 +5,5 @@ type Group {
 }
 
 type Query {
-	group(name: String, indicatorNames: [String], id_user: Int): Group
+	group(name: String, indicatorNames: [String], begin: String, end: String, id_user: Int): Group
 }

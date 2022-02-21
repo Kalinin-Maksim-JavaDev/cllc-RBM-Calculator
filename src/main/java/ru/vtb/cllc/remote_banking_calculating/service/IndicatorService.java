@@ -35,11 +35,12 @@ public class IndicatorService {
         this.indicatorRegistry = indicatorRegistry;
     }
 
-    public <Group, V> Map<Group, Map<Indicator<V>, V>> calculate(Integer id_user, Function<Record, Group> demension, List<String> indicatorNames) {
+    public <Group, V> Map<Group, Map<Indicator<V>, V>> calculate(LocalDate begin, LocalDate end, Integer id_user, Function<Record, Group> demension, List<String> indicatorNames) {
 
-        ShowCase showCases = showCaseRepository.get(LocalDate.of(2021, 12, 29));
+        List<ShowCase> showCases = showCaseRepository.get(begin, end);
 
-        Stream<Record> recordStream = Arrays.stream(showCases.getRecords());
+        Stream<Record> recordStream = showCases.stream()
+                .flatMap(showCase -> Arrays.stream(showCase.getRecords()));
 
         List<Indicator<V>> indicators = indicatorRegistry.get(indicatorNames);
 
