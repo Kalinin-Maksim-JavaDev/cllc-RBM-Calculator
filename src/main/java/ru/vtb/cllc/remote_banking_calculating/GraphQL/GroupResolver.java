@@ -9,7 +9,6 @@ import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.service.IndicatorService;
 
 import java.util.List;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -29,7 +28,7 @@ public class GroupResolver implements GraphQLQueryResolver {
                 demension = record -> (G) record.getEpochDay();
                 break;
         }
-        Map<G, Map<String, Object>> indicatorsGroup = service.calculate(id_user,
+        var indicatorsGroup = service.calculate(id_user,
                 demension,
                 indicatorNames);
 

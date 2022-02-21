@@ -12,7 +12,6 @@ import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.service.IndicatorService;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,7 +26,7 @@ public class IndicatorController<T> {
     @GetMapping("/byMonth")
     public ResponseEntity getIndicators(Integer id_user, String indicators) {
 
-        Map<Integer, Map<String, Object>> group = service.calculate(id_user,
+        var group = service.calculate(id_user,
                 Record::getMonth,
                 Arrays.stream(indicators.split(",")).collect(Collectors.toList()));
 

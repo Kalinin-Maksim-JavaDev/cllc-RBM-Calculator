@@ -6,7 +6,6 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 @Repository
 public class ShowCaseRepository {
@@ -18,9 +17,14 @@ public class ShowCaseRepository {
         this.valueOperations = redisTemplate.opsForValue();
     }
 
-    public List<ShowCase> get(LocalDate date) {
+    public ShowCase get(LocalDate date) {
 
-        List<String> keys = List.of(KEY_PREFIX.concat("_").concat(date.format(DateTimeFormatter.ISO_DATE)));
-        return valueOperations.multiGet(keys);
+        String key = KEY_PREFIX.concat("_").concat(date.format(DateTimeFormatter.ISO_DATE));
+        return valueOperations.get(key);
+    }
+
+    public void put(String key, ShowCase showCase) {
+
+        valueOperations.set(key, showCase);
     }
 }
