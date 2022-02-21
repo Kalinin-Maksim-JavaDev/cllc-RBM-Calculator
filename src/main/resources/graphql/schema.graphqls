@@ -1,8 +1,9 @@
 type Group {
 	name: String,
+	indicatorNames: [String]
 	groups: [Group]
 }
 
 type Query {
-	group(name: String): Group
+	group(name: String, indicatorNames: [String], id_user: Int): Group
 }

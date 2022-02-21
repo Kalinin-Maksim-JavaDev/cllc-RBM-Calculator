@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.service.IndicatorService;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -25,7 +27,9 @@ public class IndicatorController<T> {
     @GetMapping("/byMonth")
     public ResponseEntity getIndicators(Long id_user, String indicators) {
 
-        Map<Integer, Map<String, Object>> group = service.calculate(id_user, Record::getMonth, indicators.split(","));
+        Map<Integer, Map<String, Object>> group = service.calculate(id_user,
+                Record::getMonth,
+                Arrays.stream(indicators.split(",")).collect(Collectors.toList()));
 
         return new ResponseEntity(group, HttpStatus.OK);
     }

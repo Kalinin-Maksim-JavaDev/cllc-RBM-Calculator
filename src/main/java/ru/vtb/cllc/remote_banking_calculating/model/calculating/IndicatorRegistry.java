@@ -40,8 +40,8 @@ public class IndicatorRegistry {
         map = mapNew;
     }
 
-    public List get(String[] names) {
-        String[] sortedNames = names.clone();
+    public List get(List<String> names) {
+        String[] sortedNames = names.toArray((new String[0]));
         Arrays.sort(sortedNames);
         return map.entrySet().stream()
                 .filter(kv -> Arrays.binarySearch(sortedNames, kv.getKey()) >= 0)
