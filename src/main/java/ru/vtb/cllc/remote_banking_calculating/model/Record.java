@@ -18,56 +18,40 @@ public class Record {
     @JsonProperty("Id_tree_division")
     public int id_tree_division;
     @JsonProperty("N_inb")
-    public long n_inb;
+    public int n_inb;
     @JsonProperty("N_out")
-    public long n_out;
+    public int n_out;
     @JsonProperty("N_hold")
-    public long n_hold;
+    public int n_hold;
     @JsonProperty("N_abandon")
-    public long n_abandon;
+    public int n_abandon;
     @JsonProperty("N_transfer")
-    public long n_transfer;
+    public int n_transfer;
     @JsonProperty("T_inb")
-    public long t_inb;
+    public int t_inb;
     @JsonProperty("T_out")
-    public long t_out;
+    public int t_out;
     @JsonProperty("T_hold")
-    public long t_hold;
+    public int t_hold;
     @JsonProperty("T_ring")
-    public long t_ring;
+    public int t_ring;
     @JsonProperty("T_acw")
-    public long t_acw;
+    public int t_acw;
     @JsonProperty("T_wait")
-    public long t_wait;
+    public int t_wait;
 
     private int month;
-    private long epochDay;
+    private int epochDay;
 
     @JsonProperty("Date")
     public void setDate(String dateAsString) {
         LocalDate date = LocalDate.parse(dateAsString, DateTimeFormatter.ISO_DATE);
         month = date.getMonthValue();
-        epochDay = date.toEpochDay();
+        epochDay = Math.toIntExact(date.toEpochDay());
     }
 
-    public Long getEpochDay() {
-        return epochDay;
-    }
-
-    public int getId_user() {
-        return id_user;
-    }
-
-    public int getId_line() {
-        return id_line;
-    }
-
-    public int getId_region() {
-        return id_region;
-    }
-
-    public int getId_tree_division() {
-        return id_tree_division;
+    public Integer getEpochDay() {
+        return Math.toIntExact(epochDay);
     }
 
     public Integer getMonth() {

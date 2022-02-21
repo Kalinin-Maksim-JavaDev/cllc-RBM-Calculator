@@ -1,9 +1,19 @@
-type Group {
+type IndicatorValue {
+     name: String
+     value: Int
+}
+
+type IndicatorsGroupPart {
+     part: Int
+     indicators: [IndicatorValue]
+}
+
+type IndicatorsGroup {
 	name: String,
-	indicatorNames: [String]
-	groups: [Group]
+	indicatorsGroupParts: [IndicatorsGroupPart]
+	subGroups: [IndicatorsGroup]
 }
 
 type Query {
-	group(name: String, indicatorNames: [String], begin: String, end: String, id_user: Int): Group
+	group(name: String, indicatorNames: [String], begin: String, end: String, id_user: Int): IndicatorsGroup
 }

@@ -35,7 +35,7 @@ public class IndicatorService {
         this.indicatorRegistry = indicatorRegistry;
     }
 
-    public <Group, V> Map<Group, Map<Indicator<V>, V>> calculate(LocalDate begin, LocalDate end, Integer id_user, Function<Record, Group> demension, List<String> indicatorNames) {
+    public <Group, V> Map<Group, Map<String, V>> calculate(LocalDate begin, LocalDate end, Integer id_user, Function<Record, Group> demension, List<String> indicatorNames) {
 
         List<ShowCase> showCases = showCaseRepository.get(begin, end);
 
@@ -44,13 +44,13 @@ public class IndicatorService {
 
         List<Indicator<V>> indicators = indicatorRegistry.get(indicatorNames);
 
-        Function<Record, Map<Indicator<V>, V>> indicateRecord = (Record record) ->
+        Function<Record, Map<String, V>> indicateRecord = (Record record) ->
                 indicators.stream()
-                        .collect(toMap(Function.identity(), (Indicator<V> indicator) -> indicator.apply(record)));
+                        .collect(toMap(Indicator::getName, (Indicator<V> indicator) -> indicator.apply(record)));
 
         var sumAndIndicate = Collector.of(Record::new, Record::sum, Record::sum, indicateRecord::apply);
 
-        Map<Group, Map<Indicator<V>, V>> indicatorsGroup = recordStream
+        Map<Group, Map<String, V>> indicatorsGroup = recordStream
                 .filter(record -> Objects.isNull(id_user) || record.id_user == id_user)
                 .collect(groupingBy(demension, sumAndIndicate));
 

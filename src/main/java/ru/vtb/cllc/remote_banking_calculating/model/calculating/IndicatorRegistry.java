@@ -24,7 +24,7 @@ public class IndicatorRegistry {
         for (IndicatorFormula formula : formulas) {
             codeGenerator.add(formula.getName(),
                     formula.getExpression(),
-                    Long.class.getName(),
+                    Integer.class.getName(),
                     Record.class.getName());
         }
         var loader = codeGenerator.compile();
