@@ -18,27 +18,27 @@ public class Record {
     @JsonProperty("Id_tree_division")
     public int id_tree_division;
     @JsonProperty("N_inb")
-    public int n_inb;
+    public long n_inb;
     @JsonProperty("N_out")
-    public int n_out;
+    public long n_out;
     @JsonProperty("N_hold")
-    public int n_hold;
+    public long n_hold;
     @JsonProperty("N_abandon")
-    public int n_abandon;
+    public long n_abandon;
     @JsonProperty("N_transfer")
-    public int n_transfer;
+    public long n_transfer;
     @JsonProperty("T_inb")
-    public int t_inb;
+    public long t_inb;
     @JsonProperty("T_out")
-    public int t_out;
+    public long t_out;
     @JsonProperty("T_hold")
-    public int t_hold;
+    public long t_hold;
     @JsonProperty("T_ring")
-    public int t_ring;
+    public long t_ring;
     @JsonProperty("T_acw")
-    public int t_acw;
+    public long t_acw;
     @JsonProperty("T_wait")
-    public int t_wait;
+    public long t_wait;
 
     private int month;
     private long epochDay;

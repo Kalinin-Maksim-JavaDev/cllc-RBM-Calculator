@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.model.indicator.Indicator;
@@ -19,47 +18,44 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.lang.String.format;
-import static org.springframework.util.StringUtils.capitalize;
 
 @Log4j2
-@Component
 public class CodeGenerator {
 
     private static final Pattern LAMBDA_PATTERN = Pattern.compile("((,)*([a-zA-Z1-9_])*)*->(.)*");
     private static final String INDICATOR_INTERFACE_NAME = Indicator.class.getName();
     private final Path tmpdir;
     private final JavaCompiler compiler;
+    private final List<File> files;
 
     @SneakyThrows
     public CodeGenerator() {
         tmpdir = Files.createTempDirectory("generated");
+        files = new ArrayList<>();
         compiler = ToolProvider.getSystemJavaCompiler();
     }
 
-    Class<?>[] createIndicatorClasses(String names, String exp, String type, String sourceName) {
-        return null;
-    }
-
-    Class<?> createIndicatorClass(String name, String exp, String type, String sourceName) {
+    void add(String name, String exp, String type, String sourceName) {
 
         log.debug("try generate indicator: '{}' - name; '{}' - operator", name, exp);
 
         Objects.requireNonNull(name, "name must not be null");
         Objects.requireNonNull(exp, "expression must not be null");
 
-        Operator operator = Operator.of(exp, type.toLowerCase());
+        Operator operator = Operator.of(exp, type);
 
-        var className = capitalize(name.toLowerCase());
-        var javaClassName = className.concat(".java");
+        var javaClassName = name.concat(".java");
 
         var bodyBuilder = new StringBuilder()
-                .append(format("public class %s implements %s{\n", className, INDICATOR_INTERFACE_NAME))
+                .append(format("public class %s implements %s{\n", name, INDICATOR_INTERFACE_NAME))
                 .append("\n")
                 .append(format("    public %s apply(%s src) {\n", operator.getType(), sourceName));
         for (var arg : operator.getArgs())
@@ -72,9 +68,13 @@ public class CodeGenerator {
 
         var classBody = bodyBuilder.toString();
 
-        Class clazz;
+        files.add(writeDown(javaClassName, classBody));
+    }
+
+    URLClassLoader compile() {
+        compile(files);
         try {
-            return new URLClassLoader(new URL[]{compile(writeDown(javaClassName, classBody))}).loadClass(className);
+            return new URLClassLoader(new URL[]{tmpdir.toUri().toURL()});
         } catch (Exception e) {
             throw new CodeGenerateException(e.getMessage());
         }
@@ -91,7 +91,7 @@ public class CodeGenerator {
         }
     }
 
-    private URL compile(File tmpFile) {
+    private void compile(List<File> files) {
         try (var fileManager = compiler.getStandardFileManager(null, null, null);) {
 
             fileManager.setLocation(StandardLocation.CLASS_OUTPUT,
@@ -101,9 +101,8 @@ public class CodeGenerator {
                             null,
                             null,
                             null,
-                            fileManager.getJavaFileObjectsFromFiles(Arrays.asList(tmpFile)))
+                            fileManager.getJavaFileObjectsFromFiles(files))
                     .call();
-            return tmpdir.toUri().toURL();
         } catch (IOException e) {
             throw new CodeGenerateException(e.getMessage());
         }
@@ -158,7 +157,8 @@ public class CodeGenerator {
     @SneakyThrows
     public static void main(String[] args) {
         var codeGenerator = new CodeGenerator();
-        var clazz = codeGenerator.createIndicatorClass("AHT", " t_ring , t_inb , t_hold ,  t_acw, n_inb -> (t_ring + t_inb + t_hold + t_acw) / n_inb", "long", Record.class.getName());
+        codeGenerator.add("AHT", " t_ring , t_inb , t_hold ,  t_acw, n_inb -> (t_ring + t_inb + t_hold + t_acw) / n_inb", "long", Record.class.getName());
+        var clazz = codeGenerator.compile().loadClass("AHT");
         Indicator indicator = (Indicator) clazz.getDeclaredConstructor().newInstance();
         var record = new Record();
         record.t_ring = 10;

@@ -16,33 +16,36 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class IndicatorRegistry {
 
-    private final CodeGenerator codeGenerator;
-    private Map<String, Class> map = new ConcurrentHashMap<>();
+    private Map<String, Indicator> map = new ConcurrentHashMap<>();
 
-    public void update(List<IndicatorFormula> all) {
-        Map<String, Class> mapNew = new ConcurrentHashMap<>();
-        for (IndicatorFormula formula : all) {
-            mapNew.put(formula.getName(), codeGenerator.createIndicatorClass(formula.getName(),
+    public void update(List<IndicatorFormula> formulas) {
+        Map<String, Indicator> mapNew = new ConcurrentHashMap<>();
+        var codeGenerator = new CodeGenerator();
+        for (IndicatorFormula formula : formulas) {
+            codeGenerator.add(formula.getName(),
                     formula.getExpression(),
-                    "long",
-                    Record.class.getName()));
+                    Long.class.getName(),
+                    Record.class.getName());
+        }
+        var loader = codeGenerator.compile();
+        for (IndicatorFormula formula : formulas) {
+            try {
+                var clazz = loader.loadClass(formula.getName());
+                Indicator indicator = (Indicator) clazz.getDeclaredConstructor().newInstance();
+                mapNew.put(formula.getName(), indicator);
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage());
+            }
         }
         map = mapNew;
     }
 
-    public <T> List<Indicator<T>> get(String[] names) {
+    public List get(String[] names) {
         String[] sortedNames = names.clone();
         Arrays.sort(sortedNames);
         return map.entrySet().stream()
                 .filter(kv -> Arrays.binarySearch(sortedNames, kv.getKey()) >= 0)
                 .map(Map.Entry::getValue)
-                .map(c -> {
-                    try {
-                        return (Indicator<T>) c.getDeclaredConstructor().newInstance();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e.getMessage());
-                    }
-                })
                 .collect(Collectors.toList());
     }
 }

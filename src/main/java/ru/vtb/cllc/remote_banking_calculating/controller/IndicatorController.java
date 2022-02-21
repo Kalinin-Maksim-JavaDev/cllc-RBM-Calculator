@@ -25,7 +25,7 @@ public class IndicatorController<T> {
     @GetMapping("/byMonth")
     public ResponseEntity getIndicators(Long id_user, String indicators) {
 
-        Map<Integer, Map<String, Object>> group = service.calculate(id_user, indicators.split(","), Record::getMonth);
+        Map<Integer, Map<String, Object>> group = service.calculate(id_user, Record::getMonth, indicators.split(","));
 
         return new ResponseEntity(group, HttpStatus.OK);
     }

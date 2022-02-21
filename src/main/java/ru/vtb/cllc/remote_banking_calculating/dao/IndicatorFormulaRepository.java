@@ -12,8 +12,10 @@ import java.util.UUID;
 @Repository
 public interface IndicatorFormulaRepository extends CrudRepository<IndicatorFormula, UUID> {
 
-    @Query("select f from IndicatorFormula f where :date between f.period.begin and f.period.end " +
-            "or (f.period.end is null and f.period.begin > :date)")
+    @Query("select f\n" +
+            "from IndicatorFormula f\n" +
+            "where :date between f.period.begin and f.period.end\n" +
+            "   or (f.period.end is null and :date >= f.period.begin)")
     List<IndicatorFormula> findByPeriodIn(LocalDate date);
 
 }
