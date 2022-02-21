@@ -6,10 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.stereotype.Component;
+import org.springframework.context.ConfigurableApplicationContext;
 import ru.vtb.cllc.remote_banking_calculating.dao.redis.ShowCase;
 import ru.vtb.cllc.remote_banking_calculating.dao.redis.ShowCaseRepository;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
@@ -25,23 +22,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @SpringBootApplication
-@EnableScheduling
+@RequiredArgsConstructor
 public class LoadToRedis {
 
     public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
-    }
+        ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
 
-}
+        ShowCaseRepository showCaseRepository = context.getBean(ShowCaseRepository.class);
 
-@Component
-@RequiredArgsConstructor
-class Load implements ApplicationListener<ContextRefreshedEvent> {
-
-    private final ShowCaseRepository showCaseRepository;
-
-    @Override
-    public void onApplicationEvent(ContextRefreshedEvent event) {
         try {
             List<File> files = Files.list(Path.of("C:\\Work\\Liga\\VTB\\cllc\\showcase"))
                     .map(Path::toFile).collect(Collectors.toList());
