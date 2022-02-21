@@ -25,7 +25,7 @@ public class IndicatorController<T> {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/byMonth")
-    public ResponseEntity getIndicators(Long id_user, String indicators) {
+    public ResponseEntity getIndicators(Integer id_user, String indicators) {
 
         Map<Integer, Map<String, Object>> group = service.calculate(id_user,
                 Record::getMonth,

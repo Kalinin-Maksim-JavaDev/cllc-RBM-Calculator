@@ -50,7 +50,7 @@ public class Record {
         epochDay = date.toEpochDay();
     }
 
-    public long getEpochDay() {
+    public Long getEpochDay() {
         return epochDay;
     }
 
@@ -70,7 +70,7 @@ public class Record {
         return id_tree_division;
     }
 
-    public int getMonth() {
+    public Integer getMonth() {
         return month;
     }
 

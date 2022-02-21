@@ -17,16 +17,19 @@ public class GroupResolver implements GraphQLQueryResolver {
 
     private final IndicatorService service;
 
-    public Group group(String name, List<String> indicatorNames, int id_user) {
+    public <G> Group group(String name, List<String> indicatorNames, Integer id_user) {
 
-        Function<Record, Integer> demension = null;
+        Function<Record, G> demension = null;
 
         switch (name) {
             case "byMonth":
-                demension = Record::getMonth;
+                demension = record -> (G) record.getMonth();
+                break;
+            case "byDay":
+                demension = record -> (G) record.getEpochDay();
                 break;
         }
-        Map<Integer, Map<String, Object>> indicatorsGroup = service.calculate(id_user,
+        Map<G, Map<String, Object>> indicatorsGroup = service.calculate(id_user,
                 demension,
                 indicatorNames);
 
