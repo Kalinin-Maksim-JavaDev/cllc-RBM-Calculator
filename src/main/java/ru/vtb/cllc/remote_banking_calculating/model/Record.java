@@ -40,6 +40,7 @@ public class Record {
     @JsonProperty("T_wait")
     public int t_wait;
 
+    public int count = 1;
     private int month;
     private int epochDay;
 
@@ -59,6 +60,7 @@ public class Record {
     }
 
     public Record sum(Record other) {
+        this.count += other.count;
         this.n_inb += other.n_inb;
         this.n_out += other.n_out;
         this.n_hold += other.n_hold;
