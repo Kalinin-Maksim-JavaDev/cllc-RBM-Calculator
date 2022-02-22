@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.model.calculating.IndicatorRegistry;
 import ru.vtb.cllc.remote_banking_calculating.model.enity.IndicatorFormula;
-import ru.vtb.cllc.remote_banking_calculating.model.graphql.Dimension;
+import ru.vtb.cllc.remote_banking_calculating.model.graphql.GroupName;
 import ru.vtb.cllc.remote_banking_calculating.model.graphql.type.IndicatorValue;
 import ru.vtb.cllc.remote_banking_calculating.model.graphql.type.IndicatorsGroup;
 import ru.vtb.cllc.remote_banking_calculating.service.IndicatorService;
@@ -24,11 +24,11 @@ public class IndicatorsGroupResolver implements GraphQLQueryResolver {
     private final IndicatorService service;
     private final IndicatorRegistry registry;
 
-    public IndicatorsGroup group(Dimension dimension, List<String> indicatorNames, String begin, String end, Integer id_user) {
+    public IndicatorsGroup group(GroupName name, List<String> indicatorNames, String begin, String end, Integer id_user) {
 
         Function<Record, Integer> classifier = null;
 
-        switch (dimension) {
+        switch (name) {
             case BY_MONTH:
                 classifier = Record::getMonth;
                 break;
@@ -54,7 +54,7 @@ public class IndicatorsGroupResolver implements GraphQLQueryResolver {
                 classifier,
                 indicatorNames);
 
-        return new IndicatorsGroup(dimension, indicatorsGroup, List.of());
+        return new IndicatorsGroup(name, indicatorsGroup, List.of());
     }
 
     public List<IndicatorFormula> formulas() {
