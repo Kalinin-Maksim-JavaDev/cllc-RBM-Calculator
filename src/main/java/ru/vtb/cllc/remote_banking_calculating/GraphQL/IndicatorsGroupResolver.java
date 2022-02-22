@@ -35,6 +35,15 @@ public class IndicatorsGroupResolver implements GraphQLQueryResolver {
             case BY_DAY:
                 classifier = Record::getEpochDay;
                 break;
+            case BY_DIVISION:
+                classifier = Record::getId_tree_division;
+                break;
+            case BY_REGION:
+                classifier = Record::getId_region;
+                break;
+            case BY_USER:
+                classifier = Record::getId_user;
+                break;
             case BY_LINE:
                 classifier = Record::getId_line;
                 break;

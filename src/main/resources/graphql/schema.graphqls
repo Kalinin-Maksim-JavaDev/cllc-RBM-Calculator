@@ -1,6 +1,9 @@
 enum Dimension{
     BY_MONTH
     BY_DAY
+    BY_DIVISION
+    BY_REGION
+    BY_USER
     BY_LINE
 }
 type IndicatorValue {
