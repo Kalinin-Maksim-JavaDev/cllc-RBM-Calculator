@@ -1,3 +1,8 @@
+enum Dimension{
+    BY_MONTH
+    BY_DAY
+    BY_LINE
+}
 type IndicatorValue {
      name: String
      value: Int
@@ -10,9 +15,8 @@ type IndicatorsGroupPart {
 }
 
 type IndicatorsGroup {
-	name: String,
+	dimension: Dimension,
 	indicatorsGroupParts: [IndicatorsGroupPart]
-	subGroups: [IndicatorsGroup]
 }
 
 type IndicatorFormula {
@@ -21,6 +25,5 @@ type IndicatorFormula {
 }
 
 type Query {
-	group(name: String, indicatorNames: [String], begin: String, end: String, id_user: Int): IndicatorsGroup
-	formulas: [IndicatorFormula]
+	group(dimension: Dimension, indicatorNames: [String], begin: String, end: String, id_user: Int): IndicatorsGroup
 }

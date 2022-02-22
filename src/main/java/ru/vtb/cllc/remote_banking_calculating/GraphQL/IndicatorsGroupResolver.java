@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import ru.vtb.cllc.remote_banking_calculating.dao.IndicatorFormulaRepository;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.model.enity.IndicatorFormula;
+import ru.vtb.cllc.remote_banking_calculating.model.graphql.Dimension;
 import ru.vtb.cllc.remote_banking_calculating.model.graphql.type.IndicatorValue;
 import ru.vtb.cllc.remote_banking_calculating.model.graphql.type.IndicatorsGroup;
 import ru.vtb.cllc.remote_banking_calculating.service.IndicatorService;
@@ -23,25 +24,28 @@ public class IndicatorsGroupResolver implements GraphQLQueryResolver {
     private final IndicatorService service;
     private final IndicatorFormulaRepository repository;
 
-    public IndicatorsGroup group(String name, List<String> indicatorNames, String begin, String end, Integer id_user) {
+    public IndicatorsGroup group(Dimension dimension, List<String> indicatorNames, String begin, String end, Integer id_user) {
 
-        Function<Record, Integer> demension = null;
+        Function<Record, Integer> classifier = null;
 
-        switch (name) {
-            case "byMonth":
-                demension = record -> (Integer) record.getMonth();
+        switch (dimension) {
+            case BY_MONTH:
+                classifier = Record::getMonth;
                 break;
-            case "byDay":
-                demension = record -> (Integer) record.getEpochDay();
+            case BY_DAY:
+                classifier = Record::getEpochDay;
+                break;
+            case BY_LINE:
+                classifier = Record::getId_line;
                 break;
         }
         Map<Integer, Map<String, IndicatorValue>> indicatorsGroup = service.calculate(LocalDate.parse(begin, DateTimeFormatter.ISO_DATE),
                 LocalDate.parse(end, DateTimeFormatter.ISO_DATE),
                 id_user,
-                demension,
+                classifier,
                 indicatorNames);
 
-        return new IndicatorsGroup(name, indicatorsGroup, List.of());
+        return new IndicatorsGroup(dimension, indicatorsGroup, List.of());
     }
 
     public List<IndicatorFormula> formulas() {
