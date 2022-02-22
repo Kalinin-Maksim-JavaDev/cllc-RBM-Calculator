@@ -1,4 +1,4 @@
-enum GroupName{
+enum Grouping{
     BY_MONTH
     BY_DAY
     BY_DIVISION
@@ -18,7 +18,7 @@ type IndicatorsGroupPart {
 }
 
 type IndicatorsGroup {
-	name: GroupName,
+	grouping: Grouping,
 	indicatorsGroupParts: [IndicatorsGroupPart]
 }
 
@@ -28,6 +28,6 @@ type IndicatorFormula {
 }
 
 type Query {
-	group(name: GroupName, indicatorNames: [String], begin: String, end: String, id_user: Int): IndicatorsGroup
+	group(name: Grouping, indicatorNames: [String], begin: String, end: String, id_user: Int): IndicatorsGroup
 	formulas: [IndicatorFormula]
 }
