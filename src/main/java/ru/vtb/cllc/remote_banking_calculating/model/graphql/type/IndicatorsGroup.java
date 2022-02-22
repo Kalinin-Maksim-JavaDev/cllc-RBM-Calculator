@@ -28,7 +28,7 @@ public class IndicatorsGroup {
     private String description(int part, GroupName name) {
         switch (name) {
             case BY_MONTH:
-                return LocalDate.ofEpochDay(part).format(DateTimeFormatter.ofPattern("MMMM (YYYY)"));
+                return LocalDate.ofEpochDay(part).format(DateTimeFormatter.ofPattern("LLLL (YYYY)"));
             case BY_DAY:
                 return LocalDate.ofEpochDay(part).format(DateTimeFormatter.ISO_LOCAL_DATE);
             default:
