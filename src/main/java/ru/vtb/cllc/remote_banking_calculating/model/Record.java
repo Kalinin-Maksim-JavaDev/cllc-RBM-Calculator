@@ -1,5 +1,6 @@
 package ru.vtb.cllc.remote_banking_calculating.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -9,6 +10,8 @@ import java.time.format.DateTimeFormatter;
 @Data
 public class Record {
 
+    @JsonProperty("Date")
+    public String date;
     @JsonProperty("Hour")
     public int hour;
     @JsonProperty("Id_user")
@@ -42,23 +45,28 @@ public class Record {
     @JsonProperty("T_wait")
     public int t_wait;
 
+    @JsonIgnore
     public int count = 1;
-    private int month;
+
+    @JsonIgnore
+    private int epochMonthFirstDay;
+    @JsonIgnore
     private int epochDay;
 
-    @JsonProperty("Date")
-    public void setDate(String dateAsString) {
-        LocalDate date = LocalDate.parse(dateAsString, DateTimeFormatter.ISO_DATE);
-        month = date.getMonthValue();
-        epochDay = Math.toIntExact(date.toEpochDay());
+    public void setDate(String date) {
+        this.date = date;
+
+        LocalDate dateValue = LocalDate.parse(this.date, DateTimeFormatter.ISO_DATE);
+        epochMonthFirstDay = Math.toIntExact(dateValue.withDayOfMonth(1).toEpochDay());
+        epochDay = Math.toIntExact(dateValue.toEpochDay());
     }
 
     public Integer getEpochDay() {
         return Math.toIntExact(epochDay);
     }
 
-    public Integer getMonth() {
-        return month;
+    public Integer getEpochMonthFirstDay() {
+        return epochMonthFirstDay;
     }
 
     public Record sum(Record other) {

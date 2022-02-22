@@ -30,7 +30,7 @@ public class IndicatorsGroupResolver implements GraphQLQueryResolver {
 
         switch (name) {
             case BY_MONTH:
-                classifier = Record::getMonth;
+                classifier = Record::getEpochMonthFirstDay;
                 break;
             case BY_DAY:
                 classifier = Record::getEpochDay;

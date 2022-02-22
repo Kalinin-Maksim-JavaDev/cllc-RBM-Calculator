@@ -30,7 +30,7 @@ public class IndicatorController<T> {
         var group = service.calculate(begin,
                 end,
                 id_user,
-                Record::getMonth,
+                Record::getEpochMonthFirstDay,
                 Arrays.stream(indicators.split(",")).collect(Collectors.toList()));
 
         return new ResponseEntity(group, HttpStatus.OK);

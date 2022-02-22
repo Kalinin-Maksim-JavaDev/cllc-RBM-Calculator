@@ -11,10 +11,7 @@ import ru.vtb.cllc.remote_banking_calculating.model.graphql.type.IndicatorValue;
 import ru.vtb.cllc.remote_banking_calculating.model.indicator.Indicator;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
@@ -53,7 +50,7 @@ public class IndicatorService {
 
         Map<Group, Map<String, IndicatorValue>> indicatorsGroup = recordStream
                 .filter(record -> Objects.isNull(id_user) || record.id_user == id_user)
-                .collect(groupingBy(classifier, sumAndIndicate));
+                .collect(groupingBy(classifier, TreeMap::new, sumAndIndicate));
 
         return indicatorsGroup;
     }

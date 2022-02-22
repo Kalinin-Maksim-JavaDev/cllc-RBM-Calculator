@@ -41,6 +41,8 @@ public class LoadToRedis {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        context.close();
     }
 
     private static Record[] records(File file) {

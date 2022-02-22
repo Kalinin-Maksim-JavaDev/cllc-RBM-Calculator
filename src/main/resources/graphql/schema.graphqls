@@ -13,7 +13,7 @@ type IndicatorValue {
 }
 
 type IndicatorsGroupPart {
-     part: Int
+     partDescription: String
      indicators: [IndicatorValue]
 }
 

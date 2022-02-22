@@ -7,6 +7,6 @@ import java.util.List;
 @RequiredArgsConstructor
 class IndicatorsGroupPart {
 
-    private final int part;
+    private final String partDescription;
     private final List<IndicatorValue> indicators;
 }
