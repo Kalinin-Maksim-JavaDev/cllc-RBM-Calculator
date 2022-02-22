@@ -24,7 +24,7 @@ public class IndicatorRegistry {
         for (IndicatorFormula formula : formulas) {
             codeGenerator.add(formula.getName(),
                     formula.getExpression(),
-                    Integer.class.getName(),
+                    int.class.getName(),
                     Record.class.getName());
         }
         var loader = codeGenerator.compile();
@@ -40,7 +40,7 @@ public class IndicatorRegistry {
         map = mapNew;
     }
 
-    public List get(List<String> names) {
+    public List<Indicator> get(List<String> names) {
         String[] sortedNames = names.toArray((new String[0]));
         Arrays.sort(sortedNames);
         return map.entrySet().stream()

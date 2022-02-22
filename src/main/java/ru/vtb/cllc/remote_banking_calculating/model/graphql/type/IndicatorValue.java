@@ -7,4 +7,5 @@ public class IndicatorValue {
 
     private final String name;
     private final int value;
+    private final String error;
 }

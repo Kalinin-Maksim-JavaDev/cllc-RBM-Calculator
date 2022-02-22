@@ -1,6 +1,7 @@
 type IndicatorValue {
      name: String
      value: Int
+     error: String
 }
 
 type IndicatorsGroupPart {

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import ru.vtb.cllc.remote_banking_calculating.dao.IndicatorFormulaRepository;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
 import ru.vtb.cllc.remote_banking_calculating.model.enity.IndicatorFormula;
+import ru.vtb.cllc.remote_banking_calculating.model.graphql.type.IndicatorValue;
 import ru.vtb.cllc.remote_banking_calculating.model.graphql.type.IndicatorsGroup;
 import ru.vtb.cllc.remote_banking_calculating.service.IndicatorService;
 
@@ -34,7 +35,7 @@ public class IndicatorsGroupResolver implements GraphQLQueryResolver {
                 demension = record -> (Integer) record.getEpochDay();
                 break;
         }
-        Map<Integer, Map<String, Integer>> indicatorsGroup = service.calculate(LocalDate.parse(begin, DateTimeFormatter.ISO_DATE),
+        Map<Integer, Map<String, IndicatorValue>> indicatorsGroup = service.calculate(LocalDate.parse(begin, DateTimeFormatter.ISO_DATE),
                 LocalDate.parse(end, DateTimeFormatter.ISO_DATE),
                 id_user,
                 demension,
