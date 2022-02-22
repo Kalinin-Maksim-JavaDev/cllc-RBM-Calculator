@@ -12,8 +12,10 @@ import ru.vtb.cllc.remote_banking_calculating.service.IndicatorService;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -22,15 +24,21 @@ public class IndicatorsGroupResolver implements GraphQLQueryResolver {
     private final IndicatorService service;
     private final IndicatorRegistry registry;
 
-    public IndicatorsGroup group(Grouping name, List<String> indicatorNames, String begin, String end, Integer id_user) {
+    public List<IndicatorsGroup> groups(Grouping grouping, List<String> indicatorNames, String begin, String end, Integer id_user) {
 
         Map<Integer, Map<String, IndicatorValue>> indicatorsGroup = service.calculate(LocalDate.parse(begin, DateTimeFormatter.ISO_DATE),
                 LocalDate.parse(end, DateTimeFormatter.ISO_DATE),
                 id_user,
-                name.getClassifier(),
+                grouping.getClassifier(),
                 indicatorNames);
-
-        return new IndicatorsGroup(name, indicatorsGroup, List.of());
+        List<IndicatorsGroup> indicatorsGroups = new ArrayList<>();
+        for (int part : indicatorsGroup.keySet()) {
+            indicatorsGroups.add(new IndicatorsGroup(grouping.description(part),
+                    indicatorsGroup.get(part).entrySet().stream()
+                            .map(kv -> kv.getValue())
+                            .collect(Collectors.toList())));
+        }
+        return indicatorsGroups;
     }
 
     public List<IndicatorFormula> formulas() {

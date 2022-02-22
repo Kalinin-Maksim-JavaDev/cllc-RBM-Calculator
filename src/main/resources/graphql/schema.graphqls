@@ -12,14 +12,9 @@ type IndicatorValue {
      error: String
 }
 
-type IndicatorsGroupPart {
-     partDescription: String
-     indicators: [IndicatorValue]
-}
-
 type IndicatorsGroup {
-	grouping: Grouping,
-	indicatorsGroupParts: [IndicatorsGroupPart]
+     group: String
+     indicators: [IndicatorValue]
 }
 
 type IndicatorFormula {
@@ -28,6 +23,6 @@ type IndicatorFormula {
 }
 
 type Query {
-	group(name: Grouping, indicatorNames: [String], begin: String, end: String, id_user: Int): IndicatorsGroup
+	groups(grouping: Grouping, indicatorNames: [String], begin: String, end: String, id_user: Int): [IndicatorsGroup]
 	formulas: [IndicatorFormula]
 }
