@@ -4,8 +4,10 @@ import com.coxautodev.graphql.tools.GraphQLQueryResolver;
 import com.google.common.base.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import ru.vtb.cllc.remote_banking_calculating.model.IndicatorsGroup;
+import ru.vtb.cllc.remote_banking_calculating.dao.IndicatorFormulaRepository;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
+import ru.vtb.cllc.remote_banking_calculating.model.enity.IndicatorFormula;
+import ru.vtb.cllc.remote_banking_calculating.model.graphql.type.IndicatorsGroup;
 import ru.vtb.cllc.remote_banking_calculating.service.IndicatorService;
 
 import java.time.LocalDate;
@@ -18,6 +20,7 @@ import java.util.Map;
 public class IndicatorsGroupResolver implements GraphQLQueryResolver {
 
     private final IndicatorService service;
+    private final IndicatorFormulaRepository repository;
 
     public IndicatorsGroup group(String name, List<String> indicatorNames, String begin, String end, Integer id_user) {
 
@@ -38,5 +41,9 @@ public class IndicatorsGroupResolver implements GraphQLQueryResolver {
                 indicatorNames);
 
         return new IndicatorsGroup(name, indicatorsGroup, List.of());
+    }
+
+    public List<IndicatorFormula> formulas() {
+        return repository.findByPeriodIn(LocalDate.now());
     }
 }

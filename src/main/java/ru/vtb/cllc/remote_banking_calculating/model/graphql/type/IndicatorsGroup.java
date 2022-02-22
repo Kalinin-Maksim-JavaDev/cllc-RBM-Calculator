@@ -1,4 +1,4 @@
-package ru.vtb.cllc.remote_banking_calculating.model;
+package ru.vtb.cllc.remote_banking_calculating.model.graphql.type;
 
 import java.util.ArrayList;
 import java.util.List;
