@@ -26,4 +26,5 @@ type IndicatorFormula {
 
 type Query {
 	group(dimension: Dimension, indicatorNames: [String], begin: String, end: String, id_user: Int): IndicatorsGroup
+	formulas: [IndicatorFormula]
 }

@@ -1,5 +1,6 @@
 package ru.vtb.cllc.remote_banking_calculating.model.calculating;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 public class IndicatorRegistry {
 
     private Map<String, Indicator> map = new ConcurrentHashMap<>();
+    private final ObjectMapper objectMapper;
 
     public void update(List<IndicatorFormula> formulas) {
         Map<String, Indicator> mapNew = new ConcurrentHashMap<>();
@@ -32,6 +34,9 @@ public class IndicatorRegistry {
             try {
                 var clazz = loader.loadClass(formula.getName());
                 Indicator indicator = (Indicator) clazz.getDeclaredConstructor().newInstance();
+                ((IndicatorFormula) indicator).setName(formula.getName());
+                ((IndicatorFormula) indicator).setExpression(formula.getExpression());
+                ((IndicatorFormula) indicator).setPeriod(formula.getPeriod());
                 mapNew.put(formula.getName(), indicator);
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage());
@@ -46,6 +51,12 @@ public class IndicatorRegistry {
         return map.entrySet().stream()
                 .filter(kv -> Arrays.binarySearch(sortedNames, kv.getKey()) >= 0)
                 .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+    }
+
+    public List<IndicatorFormula> getAll() {
+        return map.values().stream()
+                .map(e -> (IndicatorFormula) e)
                 .collect(Collectors.toList());
     }
 }

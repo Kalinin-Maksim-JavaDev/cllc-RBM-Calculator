@@ -18,7 +18,7 @@ public class IndicatorFormula {
     private Period period;
 
     @Embeddable
-    private static class Period {
+    public static class Period {
         @Column(name = "pBegin")
         private LocalDate begin;
         @Column(name = "pEnd")

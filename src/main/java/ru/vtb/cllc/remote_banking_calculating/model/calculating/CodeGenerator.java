@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.util.StringUtils;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
+import ru.vtb.cllc.remote_banking_calculating.model.enity.IndicatorFormula;
 import ru.vtb.cllc.remote_banking_calculating.model.indicator.Indicator;
 
 import javax.tools.JavaCompiler;
@@ -32,6 +33,7 @@ public class CodeGenerator {
 
     private static final Pattern LAMBDA_PATTERN = Pattern.compile("((,)*([a-zA-Z1-9_])*)*->(.)*");
     private static final String INDICATOR_INTERFACE_NAME = Indicator.class.getName();
+    private static final String INDICATOR_FORMULA_NAME = IndicatorFormula.class.getName();
     private final Path tmpdir;
     private final JavaCompiler compiler;
     private final List<File> files;
@@ -55,7 +57,7 @@ public class CodeGenerator {
         var javaClassName = name.concat(".java");
 
         var bodyBuilder = new StringBuilder()
-                .append(format("public class %s implements %s{\n", name, INDICATOR_INTERFACE_NAME))
+                .append(format("public class %s extends %s implements %s{\n", name, INDICATOR_FORMULA_NAME, INDICATOR_INTERFACE_NAME))
                 .append("\n")
                 .append(format("    public %s apply(%s src) {\n", operator.getType(), sourceName));
         for (var arg : operator.getArgs())
