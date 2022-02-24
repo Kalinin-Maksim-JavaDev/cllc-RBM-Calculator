@@ -1,6 +1,5 @@
 package ru.vtb.cllc.remote_banking_calculating.model.calculating;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.vtb.cllc.remote_banking_calculating.model.Record;
@@ -19,7 +18,6 @@ import java.util.stream.Collectors;
 public class IndicatorRegistry {
 
     private Map<String, Indicator> map = new HashMap<>();
-    private final ObjectMapper objectMapper;
 
     public void update(List<IndicatorFormula> formulas) {
         Map<String, Indicator> mapNew = new ConcurrentHashMap<>();
