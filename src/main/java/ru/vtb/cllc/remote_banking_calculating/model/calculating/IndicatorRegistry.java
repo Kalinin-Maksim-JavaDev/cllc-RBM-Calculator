@@ -8,6 +8,7 @@ import ru.vtb.cllc.remote_banking_calculating.model.enity.IndicatorFormula;
 import ru.vtb.cllc.remote_banking_calculating.model.indicator.Indicator;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class IndicatorRegistry {
 
-    private Map<String, Indicator> map = new ConcurrentHashMap<>();
+    private Map<String, Indicator> map = new HashMap<>();
     private final ObjectMapper objectMapper;
 
     public void update(List<IndicatorFormula> formulas) {
