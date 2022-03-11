@@ -1,4 +1,4 @@
-package ru.vtb.cllc.remote_banking_calculating.GraphQL;
+package ru.vtb.cllc.remote_banking_calculating.graphQL;
 
 import com.coxautodev.graphql.tools.GraphQLQueryResolver;
 import lombok.RequiredArgsConstructor;
